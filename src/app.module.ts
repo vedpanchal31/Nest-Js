@@ -1,0 +1,66 @@
+import { Module } from '@nestjs/common';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { UsersModule } from './domain/users/users.module';
+import { appconfig } from './config/app';
+import { dbconfig } from './config/database';
+import { DomainModule } from './domain/domain.module';
+import { HealthController } from './health/health.controller';
+import { MailerModule } from '@nestjs-modules/mailer';
+import { CacheModule } from '@nestjs/cache-manager';
+import { redisStore } from 'cache-manager-redis-yet';
+
+@Module({
+  controllers: [HealthController],
+  imports: [
+    ConfigModule.forRoot({ isGlobal: true, load: [appconfig, dbconfig] }),
+    CacheModule.registerAsync({
+      isGlobal: true,
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: async (config: ConfigService) => ({
+        store: await redisStore({
+          socket: {
+            host: config.getOrThrow<string>('app.redis.host'),
+            port: parseInt(config.getOrThrow<string>('app.redis.port')),
+          },
+        }),
+      }),
+    }),
+    TypeOrmModule.forRootAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => ({
+        type: 'postgres',
+        host: configService.get<string>('db.host'),
+        port: configService.get<number>('db.port'),
+        username: configService.get<string>('db.username'),
+        password: configService.get<string>('db.password'),
+        database: configService.get<string>('db.name'),
+        entities: [__dirname + '/domain/**/entities/*.entity{.ts,.js}'],
+        synchronize: false,
+        logging: false,
+      }),
+    }),
+    MailerModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => ({
+        transport: {
+          host: config.getOrThrow<string>('app.mail.host'),
+          port: Number(config.getOrThrow<string>('app.mail.port')),
+          secure: false,
+          auth: {
+            user: config.getOrThrow<string>('app.mail.user'),
+            pass: config.getOrThrow<string>('app.mail.pass'),
+          },
+        },
+        defaults: {
+          from: `"No Reply" <${config.getOrThrow<string>('app.mail.from')}>`,
+        },
+      }),
+    }),
+    DomainModule,
+    UsersModule,
+  ],
+})
+export class AppModule {}
