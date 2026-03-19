@@ -1,0 +1,6 @@
+
+/home/wappnet-07/Documents/My Projects/Backend/learn-nestjs/src/core/guards/auth.guard.ts
+  55:22  error  Unsafe member access .user on an `any` value  @typescript-eslint/no-unsafe-member-access
+
+✖ 1 problem (1 error, 0 warnings)
+
