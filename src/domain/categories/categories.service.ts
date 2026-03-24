@@ -7,6 +7,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Category } from './entities/category.entity';
 import { CreateCategoryDto } from './dtos/create-category.dto';
+import { UpdateCategoryDto } from './dtos/update-category.dto';
 
 @Injectable()
 export class CategoriesService {
@@ -68,5 +69,38 @@ export class CategoriesService {
 
     const category = this.categoriesRepository.create(dto);
     return await this.categoriesRepository.save(category);
+  }
+
+  async updateCategory(id: string, dto: UpdateCategoryDto) {
+    const category = await this.categoriesRepository.findOne({
+      where: { id },
+    });
+    if (!category) {
+      throw new NotFoundException('Category not found');
+    }
+    if (dto.name) {
+      category.name = dto.name;
+    }
+    if (dto.description) {
+      category.description = dto.description;
+    }
+    return await this.categoriesRepository.save(category);
+  }
+
+  async deleteCategory(id: string) {
+    const category = await this.categoriesRepository.findOne({
+      where: { id },
+      relations: ['products'],
+    });
+    if (!category) {
+      throw new NotFoundException('Category not found');
+    }
+
+    if (category.products && category.products.length > 0) {
+      throw new BadRequestException(
+        'Cannot delete category because it has associated products. Please delete or reassign the products first',
+      );
+    }
+    return await this.categoriesRepository.softRemove(category);
   }
 }

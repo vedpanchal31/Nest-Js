@@ -41,7 +41,7 @@ export class AuthGuard implements CanActivate {
     if (!token) {
       throw new UnauthorizedException({
         status: false,
-        message: 'Token is required',
+        message: 'Unauthorized',
       });
     }
 

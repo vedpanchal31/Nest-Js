@@ -18,10 +18,13 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { UsersService } from './users.service';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { AuthGuard } from 'src/core/guards/auth.guard';
+import { RoleGuard } from 'src/core/guards/role.guard';
+import { Roles } from 'src/core/decorators/roles.decorator';
+import { RoutePermission } from 'src/core/decorators/route-permission.decorator';
 import { ITokenPayload } from 'src/core/constants/interfaces/common';
 import { UpdateProfileDto } from './dtos/update-profile.dto';
-import { UserType } from 'src/core/constants/app.constants';
+import { UserType, PermissionType } from 'src/core/constants/app.constants';
 
 @ApiTags('Users')
 @Controller('users')
@@ -29,6 +32,10 @@ export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @Get()
+  @UseGuards(AuthGuard, RoleGuard)
+  @Roles(UserType.ADMIN)
+  @RoutePermission(PermissionType.VIEW_USERS)
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Get all users' })
   @ApiQuery({
     name: 'page',
@@ -65,7 +72,7 @@ export class UsersController {
     return await this.usersService.getAllUsers(page, limit, search, userType);
   }
 
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(AuthGuard)
   @ApiBearerAuth()
   @Get('profile')
   @ApiOperation({ summary: 'Get user profile' })
@@ -77,7 +84,7 @@ export class UsersController {
     return await this.usersService.findOne(req.user.id);
   }
 
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(AuthGuard)
   @ApiBearerAuth()
   @Put('profile')
   @ApiOperation({ summary: 'Update user profile' })
@@ -92,7 +99,7 @@ export class UsersController {
     return await this.usersService.updateProfile(req.user.id, updateProfileDto);
   }
 
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(AuthGuard)
   @ApiBearerAuth()
   @Delete('profile')
   @ApiOperation({ summary: 'Soft delete user account' })

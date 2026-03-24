@@ -5,4 +5,5 @@ export interface ITokenPayload {
   email: string;
   type: TokenType;
   userType: UserType;
+  roleId?: string;
 }

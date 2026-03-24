@@ -8,6 +8,8 @@ import {
   Query,
   DefaultValuePipe,
   ParseIntPipe,
+  Patch,
+  Delete,
 } from '@nestjs/common';
 import {
   ApiBearerAuth,
@@ -18,10 +20,13 @@ import {
 } from '@nestjs/swagger';
 import { CategoriesService } from './categories.service';
 import { AuthGuard } from 'src/core/guards/auth.guard';
+import { RoleGuard } from 'src/core/guards/role.guard';
 import { Roles } from 'src/core/decorators/roles.decorator';
-import { UserType } from 'src/core/constants/app.constants';
+import { RoutePermission } from 'src/core/decorators/route-permission.decorator';
+import { UserType, PermissionType } from 'src/core/constants/app.constants';
 import { Public } from 'src/core/decorators/public.decorator';
 import { CreateCategoryDto } from './dtos/create-category.dto';
+import { UpdateCategoryDto } from './dtos/update-category.dto';
 
 @ApiTags('Categories')
 @Controller('categories')
@@ -52,12 +57,37 @@ export class CategoriesController {
   }
 
   @Post()
-  @UseGuards(AuthGuard)
+  @UseGuards(AuthGuard, RoleGuard)
   @Roles(UserType.ADMIN)
+  @RoutePermission(PermissionType.CREATE_CATEGORY)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Create a new category' })
   @ApiBody({ type: CreateCategoryDto })
   async create(@Body() createCategoryDto: CreateCategoryDto) {
     return await this.categoriesService.createCategory(createCategoryDto);
+  }
+
+  @Patch(':id')
+  @UseGuards(AuthGuard, RoleGuard)
+  @Roles(UserType.ADMIN, UserType.SUBADMIN)
+  @RoutePermission(PermissionType.UPDATE_CATEGORY)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Update a category' })
+  @ApiBody({ type: UpdateCategoryDto })
+  async update(
+    @Param('id') id: string,
+    @Body() updateCategoryDto: UpdateCategoryDto,
+  ) {
+    return await this.categoriesService.updateCategory(id, updateCategoryDto);
+  }
+
+  @Delete(':id')
+  @UseGuards(AuthGuard, RoleGuard)
+  @Roles(UserType.ADMIN)
+  @RoutePermission(PermissionType.DELETE_CATEGORY)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Delete a category' })
+  async delete(@Param('id') id: string) {
+    return await this.categoriesService.deleteCategory(id);
   }
 }

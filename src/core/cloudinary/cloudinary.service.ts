@@ -6,7 +6,7 @@ import {
 } from 'cloudinary';
 import { Readable } from 'stream';
 
-export interface MulterFile {
+export class MulterFile {
   buffer: Buffer;
   fieldname: string;
   originalname: string;

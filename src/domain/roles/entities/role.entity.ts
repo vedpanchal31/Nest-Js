@@ -7,6 +7,7 @@ import {
 } from 'typeorm';
 import { Permission } from './permission.entity';
 import { User } from '../../users/entities/user.entity';
+import { ManyToOne, JoinColumn } from 'typeorm';
 
 @Entity('roles')
 export class Role {
@@ -15,6 +16,16 @@ export class Role {
 
   @Column({ type: 'varchar', unique: true })
   name: string;
+
+  @Column({ type: 'varchar', nullable: true })
+  description: string;
+
+  @Column({ type: 'smallint', default: 1 }) // 1 = SUB_ADMIN
+  type: number;
+
+  @ManyToOne(() => User)
+  @JoinColumn({ name: 'user_id' })
+  createdBy: User;
 
   @ManyToMany(() => Permission, (permission) => permission.roles, {
     cascade: true,

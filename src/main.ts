@@ -17,8 +17,8 @@ async function bootstrap() {
   app.enableCors();
 
   const config = new DocumentBuilder()
-    .setTitle('E-commerce')
-    .setDescription('E-commerce API')
+    .setTitle('Velora')
+    .setDescription('Velora API')
     .setVersion('1.0')
     .addTag('Auth')
     .addBearerAuth() // This line is required for the "lock" icon to work!

@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Brackets, Repository } from 'typeorm';
 import { Product } from './entities/product.entity';
@@ -14,6 +18,7 @@ import { UserType } from 'src/core/constants/app.constants';
 import { Category } from 'src/domain/categories/entities/category.entity';
 import { CategoriesService } from 'src/domain/categories/categories.service';
 import { UsersService } from '../users/users.service';
+import { UpdateProductDto } from './dtos/update-product.dto';
 
 @Injectable()
 export class ProductsService {
@@ -158,5 +163,77 @@ export class ProductsService {
       );
       throw error;
     }
+  }
+
+  async updateProduct(
+    id: string,
+    user: ITokenPayload,
+    dto: UpdateProductDto,
+    imageFile: MulterFile,
+  ) {
+    const product = await this.productsRepository.findOne({
+      where: { id },
+      relations: ['supplier', 'category'],
+    });
+    if (!product) {
+      throw new BadRequestException('Product not found');
+    }
+    if (
+      user.userType === UserType.SUPPLIER &&
+      product.supplier.id !== user.id
+    ) {
+      throw new BadRequestException(
+        'You are not authorized to update this product',
+      );
+    }
+    if (dto.name) {
+      product.name = dto.name;
+    }
+    if (dto.description) {
+      product.description = dto.description;
+    }
+    if (dto.price) {
+      product.price = parseFloat(dto.price);
+    }
+    if (dto.categoryId) {
+      product.category = { id: dto.categoryId } as Category;
+    }
+    if (imageFile) {
+      const uploadedImage = (await this.cloudinaryService.uploadImage(
+        imageFile,
+        'E-commerce',
+      )) as UploadApiResponse;
+      product.image = uploadedImage.secure_url;
+    }
+    return await this.productsRepository.save(product);
+  }
+
+  async deleteProduct(id: string, user: ITokenPayload) {
+    // 1. Fetch existing product
+    const product = await this.productsRepository.findOne({
+      where: { id },
+      relations: ['supplier'],
+    });
+
+    if (!product) throw new BadRequestException('Product not found');
+
+    // 2. Authorization: Check if user has permission
+    // Supplier can only delete their own. Admin can delete anything.
+    if (
+      user.userType === UserType.SUPPLIER &&
+      product.supplier.id !== user.id
+    ) {
+      throw new ForbiddenException(
+        'You do not have permission to delete this product',
+      );
+    }
+
+    // 3. Delete the product
+    await this.productsRepository.remove(product);
+
+    return {
+      message: 'Product deleted successfully',
+      id,
+    };
   }
 }

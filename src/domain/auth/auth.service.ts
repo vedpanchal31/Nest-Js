@@ -173,15 +173,17 @@ export class AuthService {
   async register(registerDto: RegisterDto) {
     const { name, email, password, userType } = registerDto;
 
-    if (userType === UserType.ADMIN) {
+    if (userType === UserType.ADMIN || userType === UserType.SUBADMIN) {
       throw new BadRequestException({
         status: false,
-        message: 'Cannot register as an Admin. its already created',
+        message:
+          'Cannot register as Admin or SubAdmin. These must be created by an Admin.',
       });
     }
 
     const existingUser = await this.usersRepository.findOne({
       where: { email },
+      withDeleted: true,
     });
 
     if (existingUser) {
@@ -290,8 +292,8 @@ export class AuthService {
 
     const user = await this.usersRepository.findOne({
       where: { email },
+      relations: ['roles'],
     });
-
     if (!user) {
       throw new UnauthorizedException({
         status: false,
@@ -330,7 +332,9 @@ export class AuthService {
         email: user.email,
         id: user.id,
         type: TokenType.LOGIN,
-        userType: user.userType, // Include userType in JWT payload
+        userType: user.userType,
+        roleId:
+          user.roles && user.roles.length > 0 ? user.roles[0].id : undefined,
       },
       '7d',
     );

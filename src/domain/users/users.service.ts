@@ -4,16 +4,23 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import * as bcrypt from 'bcrypt';
 import { User } from './entities/user.entity';
-import { Brackets, Not, Repository } from 'typeorm';
-import { UpdateProfileDto } from './dtos/update-profile.dto';
+import { Profile } from './entities/profile.entity';
+import { Role } from '../roles/entities/role.entity';
 import { UserType } from 'src/core/constants/app.constants';
+import { CreateManagedUserDto } from './dtos/create-managed-user.dto';
+import { UpdateManagedUserDto } from './dtos/update-managed-user.dto';
+import { UpdateProfileDto } from './dtos/update-profile.dto';
+import { MailerService } from '@nestjs-modules/mailer';
 
 @Injectable()
 export class UsersService {
   constructor(
     @InjectRepository(User)
     private readonly usersRepository: Repository<User>,
+    private readonly mailerService: MailerService,
   ) {}
 
   async getAllUsers(
@@ -22,153 +29,147 @@ export class UsersService {
     search?: string,
     userType?: UserType,
   ) {
-    const skip = (page - 1) * limit;
-
     const query = this.usersRepository
       .createQueryBuilder('user')
-      .orderBy('user.createdAt', 'DESC')
-      .skip(skip)
-      .take(limit);
+      .leftJoinAndSelect('user.profile', 'profile')
+      .leftJoinAndSelect('user.roles', 'roles');
+
+    if (search) {
+      query.andWhere('(user.name ILIKE :search OR user.email ILIKE :search)', {
+        search: `%${search}%`,
+      });
+    }
 
     if (userType) {
       query.andWhere('user.userType = :userType', { userType });
     }
 
-    if (search) {
-      query.andWhere(
-        new Brackets((qb) => {
-          qb.where('user.name ILike :search', {
-            search: `%${search}%`,
-          }).orWhere('user.email ILike :search', {
-            search: `%${search}%`,
-          });
-        }),
-      );
-    }
+    query
+      .skip((page - 1) * limit)
+      .take(limit)
+      .orderBy('user.createdAt', 'DESC');
 
-    const [items, totalItems] = await query.getManyAndCount();
-
-    const totalPages = Math.ceil(totalItems / limit);
+    const [users, total] = await query.getManyAndCount();
 
     return {
-      data: items,
-      totalItems,
-      totalPages,
-      currentPage: page,
+      users,
+      total,
+      page,
+      limit,
     };
   }
 
   async findOne(id: string) {
-    return await this.usersRepository.findOne({
+    const user = await this.usersRepository.findOne({
       where: { id },
-      relations: ['profile'],
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        isEmailVerified: true,
-        userType: true,
-        createdAt: true,
-        updatedAt: true,
-        profile: {
-          id: true,
-          name: true,
-          email: true,
-          countryCode: true,
-          countryShortcode: true,
-          mobile: true,
-          address: true,
-          dateOfBirth: true,
-        },
-      },
+      relations: ['profile', 'roles', 'roles.permissions'],
+    });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    return user;
+  }
+
+  async findByEmail(email: string) {
+    return await this.usersRepository.findOne({
+      where: { email },
+      relations: ['profile', 'roles', 'roles.permissions'],
     });
   }
 
-  async updateProfile(userId: string, dto: UpdateProfileDto) {
-    const user = await this.usersRepository.findOne({
-      where: { id: userId },
-      relations: ['profile'],
+  async createUser(dto: CreateManagedUserDto) {
+    const { email, name, userType, roleId } = dto;
+
+    const existingUser = await this.usersRepository.findOne({
+      where: { email },
     });
 
-    if (!user) throw new NotFoundException('User not found');
-
-    const profile = user.profile;
-
-    if (profile.address === null && !dto.address) {
-      throw new BadRequestException('Address is required');
+    if (existingUser) {
+      throw new BadRequestException('User with this email already exists');
     }
 
-    if (profile.dateOfBirth === null && !dto.dateOfBirth) {
-      throw new BadRequestException('Date of birth is required');
+    // Generate a secure dummy password
+    const dummyPassword = Math.random().toString(36).slice(-8) + 'A1!';
+    const hashedPassword = await bcrypt.hash(dummyPassword, 10);
+
+    const user = this.usersRepository.create({
+      name,
+      email,
+      password: hashedPassword,
+      userType,
+      isEmailVerified: true,
+    });
+
+    // Create a skeleton profile
+    const profile = new Profile();
+    profile.name = name;
+    profile.email = email;
+    user.profile = profile;
+
+    if (roleId) {
+      user.roles = [{ id: roleId } as Role];
     }
 
-    if (profile.mobile === null && !dto.mobile) {
-      throw new BadRequestException('Mobile details are required');
+    const savedUser = await this.usersRepository.save(user);
+
+    // Send welcome email with dummy password
+    await this.sendWelcomeEmail(email, name, dummyPassword);
+
+    return savedUser;
+  }
+
+  async updateUser(id: string, dto: UpdateManagedUserDto) {
+    const user = await this.findOne(id);
+
+    if (dto.name) user.name = dto.name;
+    if (dto.userType) user.userType = dto.userType;
+
+    if (dto.roleId) {
+      user.roles = [{ id: dto.roleId } as Role];
     }
 
-    if (dto.dateOfBirth) {
-      const dob = new Date(dto.dateOfBirth);
-      const today = new Date();
+    return await this.usersRepository.save(user);
+  }
 
-      if (dob > today) {
-        throw new BadRequestException('Date of birth cannot be in the future');
-      }
-
-      profile.dateOfBirth = dob;
-    }
-
-    if (dto.mobile) {
-      const { countryCode, countryShortcode, mobile } = dto;
-
-      const existingUser = await this.usersRepository.findOne({
-        where: {
-          id: Not(userId),
-          profile: {
-            countryCode,
-            countryShortcode,
-            mobile,
-          },
-        },
-      });
-
-      if (existingUser) {
-        throw new BadRequestException('Phone number already exists');
-      }
-
-      profile.countryCode = countryCode;
-      profile.countryShortcode = countryShortcode;
-      profile.mobile = mobile;
-    }
-
-    if (dto.address) {
-      profile.address = dto.address;
-    }
+  async updateProfile(id: string, dto: UpdateProfileDto) {
+    const user = await this.findOne(id);
 
     if (dto.name) {
-      profile.name = dto.name;
       user.name = dto.name;
+      user.profile.name = dto.name;
     }
 
-    await this.usersRepository.save(user);
+    if (dto.address) user.profile.address = dto.address;
+    if (dto.mobile) user.profile.mobile = dto.mobile;
+    if (dto.countryCode) user.profile.countryCode = dto.countryCode;
+    if (dto.countryShortcode)
+      user.profile.countryShortcode = dto.countryShortcode;
+    if (dto.dateOfBirth) user.profile.dateOfBirth = new Date(dto.dateOfBirth);
 
-    return {
-      message: 'Profile updated successfully',
-      profile: await this.findOne(userId),
-    };
+    return await this.usersRepository.save(user);
   }
 
-  async removeUser(userId: string) {
-    const user = await this.usersRepository.findOne({
-      where: { id: userId },
-      relations: ['profile'],
-    });
+  async removeUser(id: string) {
+    const user = await this.findOne(id);
+    return await this.usersRepository.softRemove(user);
+  }
 
-    if (!user) throw new NotFoundException('User not found');
-
-    await this.usersRepository.softRemove(user);
-
-    return {
-      message: 'User deleted successfully',
-    };
+  private async sendWelcomeEmail(
+    email: string,
+    name: string,
+    password: string,
+  ) {
+    try {
+      await this.mailerService.sendMail({
+        to: email,
+        subject: 'Welcome to our platform',
+        text: `Hello ${name},\n\nYour account has been created by the administrator.\n\nYour login credentials are:\nEmail: ${email}\nPassword: ${password}\n\nPlease change your password after logging in.\n\nBest regards,\nThe Team`,
+      });
+      console.log(`Welcome email sent to ${email}`);
+    } catch (error) {
+      console.error(`Failed to send welcome email to ${email}:`, error);
+    }
   }
 }
