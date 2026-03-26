@@ -8,6 +8,8 @@ import { RegisterDto } from '../../domain/auth/dtos/register.dto';
 import * as bcrypt from 'bcrypt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { InjectQueue } from '@nestjs/bull';
+import type { Queue } from 'bull';
 import { User } from '../users/entities/user.entity';
 import { LoginDto } from './dtos/login.dto';
 import { OtpType, TokenType, UserType } from 'src/core/constants/app.constants';
@@ -19,6 +21,7 @@ import { ResendOtpDto } from './dtos/resend-otp.dto';
 import { ForgotPasswordDto } from './dtos/forgot-password.dto';
 import { ResetPasswordDto } from './dtos/reset-password.dto';
 import { CACHE_MANAGER, Cache } from '@nestjs/cache-manager';
+import { NotificationType } from '../notifications/entities/notification.entity';
 
 @Injectable()
 export class AuthService {
@@ -28,7 +31,8 @@ export class AuthService {
     private readonly _jwt: JwtService,
     private readonly mailerService: MailerService,
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
-  ) {}
+    @InjectQueue('notifications') private readonly notificationsQueue: Queue,
+  ) { }
 
   private _generateOtp(): string {
     return Math.floor(100000 + Math.random() * 900000).toString();
@@ -106,6 +110,16 @@ export class AuthService {
 
     // Clear Reset Token from Redis after success
     await this.cacheManager.del(`reset_token:${email}`);
+
+    // Send notification: Password Changed
+    await this.notificationsQueue.add('send-notification', {
+      userId: user.id,
+      type: NotificationType.SYSTEM,
+      title: 'Password Changed Successfully',
+      message: 'Your password has been changed successfully. If you did not make this change, please contact support immediately.',
+      actionUrl: '/settings/security',
+      eventName: 'user.password-changed',
+    });
 
     return {
       message:
@@ -206,6 +220,12 @@ export class AuthService {
     });
 
     const newUser = await this.usersRepository.save(user);
+
+    // Send Welcome Notification
+    await this.notificationsQueue.add('welcome-notification', {
+      userId: newUser.id,
+      userName: newUser.name,
+    });
 
     // Store OTP in Redis for 10 minutes
     await this.cacheManager.set(

@@ -31,7 +31,7 @@ import { ITokenPayload } from 'src/core/constants/interfaces/common';
 @UseGuards(AuthGuard, RoleGuard)
 @Controller('order-management')
 export class OrderManagementController {
-  constructor(private readonly orderService: OrderService) {}
+  constructor(private readonly orderService: OrderService) { }
 
   @Get()
   @RoutePermission(PermissionType.VIEW_ORDERS)

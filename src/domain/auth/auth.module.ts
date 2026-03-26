@@ -1,4 +1,5 @@
 import { Module, forwardRef } from '@nestjs/common';
+import { BullModule } from '@nestjs/bull';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { UsersModule } from '../users/users.module';
@@ -18,10 +19,13 @@ import { PassportModule } from '@nestjs/passport';
       }),
       imports: [ConfigModule],
     }),
+    BullModule.registerQueue({
+      name: 'notifications',
+    }),
   ],
 
   controllers: [AuthController],
   providers: [AuthService, JwtStrategy],
   exports: [AuthService],
 })
-export class AuthModule {}
+export class AuthModule { }

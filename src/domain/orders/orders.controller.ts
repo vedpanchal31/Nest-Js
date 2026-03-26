@@ -10,7 +10,10 @@ import {
   DefaultValuePipe,
   ParseIntPipe,
   Patch,
+  Res,
+  HttpStatus,
 } from '@nestjs/common';
+import type { Response } from 'express';
 import {
   ApiTags,
   ApiOperation,
@@ -21,13 +24,14 @@ import { CreateOrderDto } from './dtos/create-order.dto';
 import { AuthGuard } from '../../core/guards/auth.guard';
 import { ITokenPayload } from '../../core/constants/interfaces/common';
 import { OrderService } from './orders.service';
+import { Public } from '../../core/decorators/public.decorator';
 
 @ApiTags('Orders')
 @ApiBearerAuth()
 @UseGuards(AuthGuard)
 @Controller('orders')
 export class OrdersController {
-  constructor(private readonly ordersService: OrderService) {}
+  constructor(private readonly ordersService: OrderService) { }
 
   @Post()
   @ApiOperation({ summary: 'Place an order' })
@@ -67,4 +71,41 @@ export class OrdersController {
   ) {
     return await this.ordersService.cancelOrder(id, req.user.id);
   }
+
+  @Get(':id/invoice')
+  @ApiOperation({ summary: 'Download order invoice PDF' })
+  async downloadInvoice(
+    @Req() req: { user: ITokenPayload },
+    @Param('id') id: string,
+    @Res() res: Response,
+  ) {
+    try {
+      const order = await this.ordersService.getOrderSummary(id, req.user.id);
+      const pdfBuffer = await this.ordersService.generateInvoice(order);
+
+      res.set({
+        'Content-Type': 'application/pdf',
+        'Content-Disposition': `attachment; filename=invoice-${id.substring(0, 8).toUpperCase()}.pdf`,
+        'Content-Length': pdfBuffer.length,
+      });
+
+      res.status(HttpStatus.OK).send(pdfBuffer);
+    } catch (error) {
+      res.status(HttpStatus.BAD_REQUEST).json({
+        status: false,
+        message: error.message,
+      });
+    }
+  }
+
+  @Public()
+  @Get('public/:id')
+  @ApiOperation({ summary: 'Get public order details page (no auth required)' })
+  async getPublicOrderDetails(@Param('id') id: string, @Res() res: Response) {
+    const order = await this.ordersService.getPublicOrderDetails(id);
+    const html = this.ordersService.renderOrderDetailsHTML(order);
+    res.setHeader('Content-Type', 'text/html');
+    res.send(html);
+  }
+
 }

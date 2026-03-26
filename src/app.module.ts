@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { BullModule } from '@nestjs/bull';
 import { UsersModule } from './domain/users/users.module';
 import { appconfig } from './config/app';
 import { dbconfig } from './config/database';
@@ -44,9 +45,19 @@ import { ScheduleModule } from '@nestjs/schedule';
         logging: false,
       }),
     }),
+    BullModule.forRootAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => ({
+        redis: {
+          host: configService.get<string>('app.redis.host') || 'localhost',
+          port: configService.get<number>('app.redis.port') || 6379,
+        },
+      }),
+    }),
     MailerGlobalModule,
     DomainModule,
     UsersModule,
   ],
 })
-export class AppModule {}
+export class AppModule { }

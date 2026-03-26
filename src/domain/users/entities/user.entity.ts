@@ -9,6 +9,7 @@ import {
   ManyToMany,
   JoinTable,
   OneToMany,
+  Index,
 } from 'typeorm';
 import { Profile } from './profile.entity';
 import { Role } from '../../roles/entities/role.entity';
@@ -16,6 +17,11 @@ import { UserType } from 'src/core/constants/app.constants';
 import { Product } from 'src/domain/products/entities/product.entity';
 
 @Entity('users')
+@Index(['userType'])
+@Index(['isEmailVerified'])
+@Index(['userType', 'createdAt'])
+@Index(['isEmailVerified', 'createdAt'])
+@Index(['createdAt'])
 export class User {
   @PrimaryGeneratedColumn('uuid')
   id: string;

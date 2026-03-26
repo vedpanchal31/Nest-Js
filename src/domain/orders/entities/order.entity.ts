@@ -7,6 +7,7 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   JoinColumn,
+  Index,
 } from 'typeorm';
 import { User } from '../../users/entities/user.entity';
 import { OrderStatus, PaymentMethod } from 'src/core/constants/app.constants';
@@ -14,9 +15,14 @@ import { OrderItem } from './order-item.entity';
 import { DeliveryPartner } from '../../delivery-partners/entities/delivery-partner.entity';
 
 @Entity('orders')
+@Index(['userId', 'createdAt'])
+@Index(['status', 'createdAt'])
 export class Order {
   @PrimaryGeneratedColumn('uuid')
   id: string;
+
+  @Column({ type: 'uuid', name: 'user_id' })
+  userId: string;
 
   @ManyToOne(() => User)
   @JoinColumn({ name: 'user_id' })

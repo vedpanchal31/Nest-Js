@@ -6,6 +6,8 @@ import { CategoriesModule } from './categories/categories.module';
 import { CartModule } from './cart/cart.module';
 import { OrdersModule } from './orders/orders.module';
 import { DeliveryPartnersModule } from './delivery-partners/delivery-partners.module';
+import { SettingsModule } from './settings/settings.module';
+import { NotificationsModule } from './notifications/notifications.module';
 
 @Module({
   imports: [
@@ -16,6 +18,8 @@ import { DeliveryPartnersModule } from './delivery-partners/delivery-partners.mo
     CartModule,
     OrdersModule,
     DeliveryPartnersModule,
+    SettingsModule,
+    NotificationsModule
   ],
 })
-export class DomainModule {}
+export class DomainModule { }
