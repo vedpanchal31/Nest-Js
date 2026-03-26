@@ -1,5 +1,5 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsOptional, IsString, IsNumberString, Allow } from 'class-validator';
+import { IsOptional, IsString, IsNumberString, Allow, IsUUID } from 'class-validator';
 
 export class UpdateProductDto {
   @ApiPropertyOptional({ example: 'Updated Gaming Mouse' })
@@ -17,13 +17,21 @@ export class UpdateProductDto {
   @IsNumberString()
   price?: string;
 
-  @ApiPropertyOptional({ type: 'string', format: 'binary' })
+  @ApiPropertyOptional({
+    type: 'array',
+    items: { type: 'string', format: 'binary' },
+    description: 'Multiple product images to upload'
+  })
   @Allow()
   @IsOptional()
-  image?: any;
+  images?: any[];
 
-  @ApiPropertyOptional({ example: 'category-uuid' })
+  @ApiPropertyOptional({
+    description: 'Category ID for the product',
+    example: '123e4567-e89b-12d3-a456-426614174000'
+  })
   @IsOptional()
   @IsString()
+  @IsUUID('4')
   categoryId?: string;
 }

@@ -5,16 +5,19 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { UploadApiResponse } from 'cloudinary';
 import { Category } from './entities/category.entity';
 import { CreateCategoryDto } from './dtos/create-category.dto';
 import { UpdateCategoryDto } from './dtos/update-category.dto';
+import { CloudinaryService } from 'src/core/cloudinary/cloudinary.service';
 
 @Injectable()
 export class CategoriesService {
   constructor(
     @InjectRepository(Category)
     private readonly categoriesRepository: Repository<Category>,
-  ) {}
+    private readonly cloudinaryService: CloudinaryService,
+  ) { }
 
   async getAllCategories(page: number, limit: number, search?: string) {
     const skip = (page - 1) * limit;
@@ -56,7 +59,7 @@ export class CategoriesService {
     return category;
   }
 
-  async createCategory(dto: CreateCategoryDto) {
+  async createCategory(dto: CreateCategoryDto, imageFile?: Express.Multer.File) {
     const existing = await this.categoriesRepository.findOne({
       where: { name: dto.name },
     });
@@ -67,11 +70,26 @@ export class CategoriesService {
       );
     }
 
-    const category = this.categoriesRepository.create(dto);
+    // Upload image to Cloudinary if provided
+    let imageUrl: string | null = null;
+    if (imageFile) {
+      const uploadedImage = (await this.cloudinaryService.uploadImage(
+        imageFile,
+        'E-commerce',
+      )) as UploadApiResponse;
+      imageUrl = uploadedImage.secure_url;
+    }
+
+    const categoryData: any = { ...dto };
+    if (imageUrl) {
+      categoryData.image = imageUrl;
+    }
+
+    const category = this.categoriesRepository.create(categoryData);
     return await this.categoriesRepository.save(category);
   }
 
-  async updateCategory(id: string, dto: UpdateCategoryDto) {
+  async updateCategory(id: string, dto: UpdateCategoryDto, imageFile?: Express.Multer.File) {
     const category = await this.categoriesRepository.findOne({
       where: { id },
     });
@@ -84,6 +102,16 @@ export class CategoriesService {
     if (dto.description) {
       category.description = dto.description;
     }
+
+    // Upload new image if provided
+    if (imageFile) {
+      const uploadedImage = (await this.cloudinaryService.uploadImage(
+        imageFile,
+        'E-commerce',
+      )) as UploadApiResponse;
+      category.image = uploadedImage.secure_url;
+    }
+
     return await this.categoriesRepository.save(category);
   }
 

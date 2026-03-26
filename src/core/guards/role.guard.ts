@@ -16,7 +16,7 @@ export class RoleGuard implements CanActivate {
   constructor(
     private reflector: Reflector,
     private readonly rolesService: RolesService,
-  ) {}
+  ) { }
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context
@@ -42,6 +42,9 @@ export class RoleGuard implements CanActivate {
 
     // Admin (Super Admin) bypasses permission checks
     if (user.userType === UserType.ADMIN) return true;
+
+    // Supplier bypass for product-related routes (they have their own logic in services)
+    if (user.userType === UserType.SUPPLIER) return true;
 
     // Delivery Partner bypass for Order Updates (Restricted by Service logic)
     // Cast to string to satisfy @typescript-eslint/no-unsafe-enum-comparison

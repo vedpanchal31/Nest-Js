@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { Allow, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
 export class CreateCategoryDto {
   @ApiProperty({
@@ -18,4 +18,14 @@ export class CreateCategoryDto {
   @IsString()
   @IsOptional()
   description?: string;
+
+  @ApiProperty({
+    type: 'string',
+    format: 'binary',
+    description: 'Category image to be uploaded',
+    required: false,
+  })
+  @Allow()
+  @IsOptional()
+  image?: any;
 }

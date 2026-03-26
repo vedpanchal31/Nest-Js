@@ -10,6 +10,8 @@ import {
   ParseIntPipe,
   Patch,
   Delete,
+  UseInterceptors,
+  UploadedFile,
 } from '@nestjs/common';
 import {
   ApiBearerAuth,
@@ -17,7 +19,9 @@ import {
   ApiTags,
   ApiBody,
   ApiQuery,
+  ApiConsumes,
 } from '@nestjs/swagger';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { CategoriesService } from './categories.service';
 import { AuthGuard } from 'src/core/guards/auth.guard';
 import { RoleGuard } from 'src/core/guards/role.guard';
@@ -31,7 +35,7 @@ import { UpdateCategoryDto } from './dtos/update-category.dto';
 @ApiTags('Categories')
 @Controller('categories')
 export class CategoriesController {
-  constructor(private readonly categoriesService: CategoriesService) {}
+  constructor(private readonly categoriesService: CategoriesService) { }
 
   @Get()
   @Public()
@@ -61,10 +65,15 @@ export class CategoriesController {
   @Roles(UserType.ADMIN)
   @RoutePermission(PermissionType.CREATE_CATEGORY)
   @ApiBearerAuth()
+  @ApiConsumes('multipart/form-data')
   @ApiOperation({ summary: 'Create a new category' })
   @ApiBody({ type: CreateCategoryDto })
-  async create(@Body() createCategoryDto: CreateCategoryDto) {
-    return await this.categoriesService.createCategory(createCategoryDto);
+  @UseInterceptors(FileInterceptor('image'))
+  async create(
+    @Body() createCategoryDto: CreateCategoryDto,
+    @UploadedFile() imageFile?: Express.Multer.File,
+  ) {
+    return await this.categoriesService.createCategory(createCategoryDto, imageFile);
   }
 
   @Patch(':id')
@@ -72,13 +81,16 @@ export class CategoriesController {
   @Roles(UserType.ADMIN, UserType.SUBADMIN)
   @RoutePermission(PermissionType.UPDATE_CATEGORY)
   @ApiBearerAuth()
+  @ApiConsumes('multipart/form-data')
   @ApiOperation({ summary: 'Update a category' })
   @ApiBody({ type: UpdateCategoryDto })
+  @UseInterceptors(FileInterceptor('image'))
   async update(
     @Param('id') id: string,
     @Body() updateCategoryDto: UpdateCategoryDto,
+    @UploadedFile() imageFile?: Express.Multer.File,
   ) {
-    return await this.categoriesService.updateCategory(id, updateCategoryDto);
+    return await this.categoriesService.updateCategory(id, updateCategoryDto, imageFile);
   }
 
   @Delete(':id')

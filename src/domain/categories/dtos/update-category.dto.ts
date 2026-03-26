@@ -19,4 +19,13 @@ export class UpdateCategoryDto {
   @IsString()
   @IsOptional()
   description?: string;
+
+  @ApiProperty({
+    description: 'The image URL or base64 string for the category',
+    example: 'https://example.com/category-image.jpg',
+    required: false,
+  })
+  @IsString()
+  @IsOptional()
+  image?: string;
 }

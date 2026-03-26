@@ -40,7 +40,7 @@ import { ScheduleModule } from '@nestjs/schedule';
         username: configService.get<string>('db.username'),
         password: configService.get<string>('db.password'),
         database: configService.get<string>('db.name'),
-        entities: [__dirname + '/domain/**/entities/*.entity{.ts,.js}'],
+        autoLoadEntities: true,
         synchronize: false,
         logging: false,
       }),
@@ -60,4 +60,4 @@ import { ScheduleModule } from '@nestjs/schedule';
     UsersModule,
   ],
 })
-export class AppModule { }
+export class AppModule {}

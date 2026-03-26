@@ -49,3 +49,12 @@ export enum PaymentStatus {
   COMPLETED = 2,
   FAILED = 3,
 }
+
+export const FILE_PATHS = {
+  MEDIA: 'public/media',
+  MEDIA_IMAGE: 'public/media/images',
+  MEDIA_VIDEO: 'public/media/videos',
+  MEDIA_DOCUMENT: 'public/media/documents',
+} as const;
+
+export type FilePathKey = keyof typeof FILE_PATHS;

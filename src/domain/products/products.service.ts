@@ -6,6 +6,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Brackets, Repository } from 'typeorm';
 import { Product } from './entities/product.entity';
+import { ProductImage } from './entities/product-image.entity';
 import { CreateProductDto } from './dtos/create-product.dto';
 import {
   CloudinaryService,
@@ -25,15 +26,17 @@ export class ProductsService {
   constructor(
     @InjectRepository(Product)
     private readonly productsRepository: Repository<Product>,
+    @InjectRepository(ProductImage)
+    private readonly productImageRepository: Repository<ProductImage>,
     private readonly cloudinaryService: CloudinaryService,
     private readonly categoriesService: CategoriesService,
     private readonly usersService: UsersService,
-  ) {}
+  ) { }
 
   async createProduct(
     user: ITokenPayload,
     dto: CreateProductDto,
-    imageFile: MulterFile,
+    images: Express.Multer.File[],
   ) {
     try {
       let supplierId = user.id;
@@ -77,25 +80,39 @@ export class ProductsService {
       }
 
       // Validation: Check if category exists
-      await this.categoriesService.getAllCategoriesById(dto.categoryId);
-
-      // Upload image to Cloudinary
-      const uploadedImage = (await this.cloudinaryService.uploadImage(
-        imageFile,
-        'E-commerce',
-      )) as UploadApiResponse;
+      const category = await this.categoriesService.getAllCategoriesById(dto.categoryId);
+      if (!category) {
+        throw new BadRequestException('Category not found');
+      }
 
       // Create and save the product
       const product = this.productsRepository.create({
         name: dto.name,
         description: dto.description,
         price: parseFloat(dto.price),
-        image: uploadedImage.secure_url,
         supplier: { id: supplierId } as User,
         category: { id: dto.categoryId } as Category,
       });
 
-      return await this.productsRepository.save(product);
+      const savedProduct = await this.productsRepository.save(product) as unknown as Product;
+
+      // Upload images if provided
+      if (images && images.length > 0) {
+        for (const image of images) {
+          const uploadedImage = (await this.cloudinaryService.uploadImage(
+            image,
+            'E-commerce',
+          )) as UploadApiResponse;
+
+          const productImage = this.productImageRepository.create({
+            url: uploadedImage.secure_url,
+            product: { id: savedProduct.id } as Product,
+          });
+          await this.productImageRepository.save(productImage);
+        }
+      }
+
+      return savedProduct;
     } catch (error) {
       console.error('Error creating product:', error);
       throw error;
@@ -116,6 +133,7 @@ export class ProductsService {
         .createQueryBuilder('product')
         .leftJoinAndSelect('product.supplier', 'supplier')
         .leftJoinAndSelect('product.category', 'category')
+        .leftJoinAndSelect('product.images', 'images')
         .orderBy('product.createdAt', 'DESC')
         .skip(skip)
         .take(limit);
@@ -169,7 +187,7 @@ export class ProductsService {
     id: string,
     user: ITokenPayload,
     dto: UpdateProductDto,
-    imageFile: MulterFile,
+    images: Express.Multer.File[],
   ) {
     const product = await this.productsRepository.findOne({
       where: { id },
@@ -198,14 +216,26 @@ export class ProductsService {
     if (dto.categoryId) {
       product.category = { id: dto.categoryId } as Category;
     }
-    if (imageFile) {
-      const uploadedImage = (await this.cloudinaryService.uploadImage(
-        imageFile,
-        'E-commerce',
-      )) as UploadApiResponse;
-      product.image = uploadedImage.secure_url;
+
+    const savedProduct = await this.productsRepository.save(product);
+
+    // Upload additional images if provided
+    if (images && images.length > 0) {
+      for (const image of images) {
+        const uploadedImage = (await this.cloudinaryService.uploadImage(
+          image,
+          'E-commerce',
+        )) as UploadApiResponse;
+
+        const productImage = this.productImageRepository.create({
+          url: uploadedImage.secure_url,
+          product: savedProduct,
+        });
+        await this.productImageRepository.save(productImage);
+      }
     }
-    return await this.productsRepository.save(product);
+
+    return savedProduct;
   }
 
   async deleteProduct(id: string, user: ITokenPayload) {

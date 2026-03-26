@@ -6,13 +6,14 @@ import {
   Index,
   JoinColumn,
   ManyToOne,
+  OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
 import { Category } from 'src/domain/categories/entities/category.entity';
+import { ProductImage } from './product-image.entity';
 
 @Entity('products')
-@Index(['categoryId', 'status'])
 @Index(['supplierId'])
 export class Product {
   @PrimaryGeneratedColumn('uuid')
@@ -27,11 +28,8 @@ export class Product {
   @Column({ type: 'numeric', precision: 10, scale: 2 })
   price: number;
 
-  @Column()
-  image: string;
-
-  @Column({ type: 'smallint', default: 1, name: 'status' })
-  status: number;
+  @OneToMany(() => ProductImage, (image) => image.product, { cascade: true })
+  images: ProductImage[];
 
   @Column({ type: 'uuid', name: 'supplier_id' })
   supplierId: string;

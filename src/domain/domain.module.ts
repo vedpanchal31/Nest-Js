@@ -8,6 +8,7 @@ import { OrdersModule } from './orders/orders.module';
 import { DeliveryPartnersModule } from './delivery-partners/delivery-partners.module';
 import { SettingsModule } from './settings/settings.module';
 import { NotificationsModule } from './notifications/notifications.module';
+import { MediaModule } from './media/media.module';
 
 @Module({
   imports: [
@@ -19,7 +20,8 @@ import { NotificationsModule } from './notifications/notifications.module';
     OrdersModule,
     DeliveryPartnersModule,
     SettingsModule,
-    NotificationsModule
+    NotificationsModule,
+    MediaModule
   ],
 })
 export class DomainModule { }

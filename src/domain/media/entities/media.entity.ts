@@ -3,28 +3,27 @@ import {
   CreateDateColumn,
   DeleteDateColumn,
   Entity,
-  OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
-import { Product } from 'src/domain/products/entities/product.entity';
 
-@Entity('categories')
-export class Category {
+export enum MediaType {
+  IMAGE = 'image',
+  VIDEO = 'video',
+  PDF = 'pdf',
+  ZIP = 'zip',
+  EXCEL = 'excel',
+  DOCUMENT = 'document',
+  OTHER = 'other',
+}
+
+@Entity('media')
+export class Media {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ unique: true })
-  name: string;
-
   @Column({ nullable: true })
-  description: string;
-
-  @Column({ nullable: true })
-  image: string;
-
-  @OneToMany(() => Product, (product) => product.category)
-  products: Product[];
+  path: string;
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;

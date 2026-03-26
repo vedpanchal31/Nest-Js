@@ -5,6 +5,7 @@ import {
   IsNumberString,
   IsOptional,
   IsString,
+  IsUUID,
 } from 'class-validator';
 
 export class CreateProductDto {
@@ -27,20 +28,22 @@ export class CreateProductDto {
   // We add @Allow() because main.ts has filterNonWhitelisted: true.
   // Without it, class-validator thinks 'image' is an illegal extra property.
   @ApiProperty({
-    type: 'string',
-    format: 'binary',
-    description: 'Product image to be uploaded',
-    required: true,
+    type: 'array',
+    items: { type: 'string', format: 'binary' },
+    description: 'Multiple product images to be uploaded',
+    required: false,
   })
   @Allow()
-  image: any;
+  @IsOptional()
+  images?: any[];
 
   @ApiProperty({
-    description: 'Category ID of the product',
+    description: 'Category ID for the product',
     example: '123e4567-e89b-12d3-a456-426614174000',
     required: true,
   })
   @IsString()
+  @IsUUID('4')
   @IsNotEmpty()
   categoryId: string;
 

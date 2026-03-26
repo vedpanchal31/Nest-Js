@@ -3,7 +3,7 @@ import {
   Controller,
   Post,
   Req,
-  UploadedFile,
+  UploadedFiles,
   UseGuards,
   UseInterceptors,
   BadRequestException,
@@ -15,7 +15,7 @@ import {
   Param,
   Delete,
 } from '@nestjs/common';
-import { FileInterceptor } from '@nestjs/platform-express';
+import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
 import {
   ApiBearerAuth,
   ApiBody,
@@ -42,14 +42,14 @@ import { UpdateProductDto } from './dtos/update-product.dto';
 @ApiTags('Products')
 @Controller('products')
 export class ProductsController {
-  constructor(private readonly productsService: ProductsService) {}
+  constructor(private readonly productsService: ProductsService) { }
 
   @Post()
   @UseGuards(AuthGuard, RoleGuard)
   @Roles(UserType.SUPPLIER, UserType.ADMIN)
   @RoutePermission(PermissionType.CREATE_PRODUCT)
   @ApiBearerAuth()
-  @UseInterceptors(FileInterceptor('image'))
+  @UseInterceptors(FilesInterceptor('images', 10))
   @ApiOperation({ summary: 'Add a new product' })
   @ApiConsumes('multipart/form-data')
   @ApiBody({
@@ -62,17 +62,17 @@ export class ProductsController {
   async createProduct(
     @Req() req: Request & { user: ITokenPayload },
     @Body() createProductDto: CreateProductDto,
-    @UploadedFile() image: MulterFile,
+    @UploadedFiles() images: Express.Multer.File[],
   ) {
-    if (!image) {
-      throw new BadRequestException('Product image is required');
+    if (!images || images.length === 0) {
+      throw new BadRequestException('At least one product image is required');
     }
 
-    // Pass the user ID, the data, and the file to the service
+    // Pass the user ID, the data, and the files to the service
     return await this.productsService.createProduct(
       req.user,
       createProductDto,
-      image,
+      images,
     );
   }
 
@@ -125,20 +125,20 @@ export class ProductsController {
   @Roles(UserType.SUPPLIER, UserType.ADMIN)
   @RoutePermission(PermissionType.UPDATE_PRODUCT)
   @ApiBearerAuth()
-  @UseInterceptors(FileInterceptor('image'))
+  @UseInterceptors(FilesInterceptor('images', 10))
   @ApiOperation({ summary: 'Update an existing product' })
   @ApiConsumes('multipart/form-data')
   async updateProduct(
     @Param('id') id: string,
     @Req() req: Request & { user: ITokenPayload },
     @Body() updateProductDto: UpdateProductDto,
-    @UploadedFile() image: MulterFile,
+    @UploadedFiles() images: Express.Multer.File[],
   ) {
     return this.productsService.updateProduct(
       id,
       req.user,
       updateProductDto,
-      image,
+      images,
     );
   }
 

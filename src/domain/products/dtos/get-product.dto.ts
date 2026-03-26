@@ -1,5 +1,47 @@
 import { ApiProperty } from '@nestjs/swagger';
 
+export class ProductImageDto {
+  @ApiProperty({
+    description: 'Image ID',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+  })
+  id: string;
+
+  @ApiProperty({
+    description: 'Image URL',
+    example: 'https://example.com/images/mouse-1.jpg',
+  })
+  url: string;
+}
+
+export class CategoryDto {
+  @ApiProperty({
+    description: 'Category ID',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+  })
+  id: string;
+
+  @ApiProperty({
+    description: 'Category Name',
+    example: 'Electronics',
+  })
+  name: string;
+
+  @ApiProperty({
+    description: 'Category Description',
+    example: 'All kinds of electronic items',
+    required: false,
+  })
+  description?: string;
+
+  @ApiProperty({
+    description: 'Category Image URL',
+    example: 'https://example.com/category-image.jpg',
+    required: false,
+  })
+  image?: string;
+}
+
 export class GetProductDto {
   @ApiProperty({
     description: 'Product ID',
@@ -26,10 +68,16 @@ export class GetProductDto {
   price: number;
 
   @ApiProperty({
-    description: 'Product Image URL',
-    example: 'https://example.com/images/mouse.jpg',
+    description: 'Product Images',
+    type: [ProductImageDto],
   })
-  image: string;
+  images: ProductImageDto[];
+
+  @ApiProperty({
+    description: 'Product Category',
+    type: CategoryDto,
+  })
+  category: CategoryDto;
 
   @ApiProperty({
     description: 'Supplier ID',

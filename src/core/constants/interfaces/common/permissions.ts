@@ -11,6 +11,12 @@ export enum PermissionType {
   UPDATE_PRODUCT = 'update-product',
   DELETE_PRODUCT = 'delete-product',
 
+  // Media Permissions
+  VIEW_MEDIA = 'view-media',
+  UPLOAD_MEDIA = 'upload-media',
+  UPDATE_MEDIA = 'update-media',
+  DELETE_MEDIA = 'delete-media',
+
   // User Management
   VIEW_USERS = 'view-users',
   CREATE_USER = 'create-user',

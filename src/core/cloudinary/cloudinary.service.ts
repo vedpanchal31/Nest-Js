@@ -3,6 +3,8 @@ import {
   v2 as cloudinary,
   UploadApiResponse,
   UploadApiErrorResponse,
+  DeleteApiResponse,
+  UploadApiOptions,
 } from 'cloudinary';
 import { Readable } from 'stream';
 
@@ -17,7 +19,11 @@ export class MulterFile {
 
 @Injectable()
 export class CloudinaryService {
-  constructor(@Inject('CLOUDINARY') private cloudinaryProvider) {}
+  constructor(@Inject('CLOUDINARY') private cloudinaryProvider) { }
+
+  private getDeliveryBaseUrl(): string {
+    return (process.env.CLOUDINARY_DELIVERY_BASE_URL || '').replace(/\/+$/, '');
+  }
 
   async uploadImage(
     file: MulterFile,
@@ -34,5 +40,108 @@ export class CloudinaryService {
       );
       Readable.from(file.buffer).pipe(upload);
     });
+  }
+
+  async uploadFile(
+    file: MulterFile,
+    folder?: string,
+    resourceType?: 'auto' | 'image' | 'video' | 'raw',
+    options?: UploadApiOptions,
+  ): Promise<UploadApiResponse | UploadApiErrorResponse> {
+    return new Promise((resolve, reject) => {
+      const upload = cloudinary.uploader.upload_stream(
+        {
+          folder,
+          resource_type: resourceType || 'auto',
+          ...options,
+        },
+        (error, result) => {
+          if (error) return reject(new Error(error.message || 'Upload error'));
+          if (result) return resolve(result);
+          return reject(new Error('No result returned from Cloudinary'));
+        },
+      );
+      Readable.from(file.buffer).pipe(upload);
+    });
+  }
+
+  async deleteFile(publicId: string): Promise<DeleteApiResponse> {
+    return new Promise((resolve, reject) => {
+      cloudinary.uploader.destroy(publicId, { resource_type: 'image' }, (error, result) => {
+        if (error) return reject(new Error(error.message || 'Delete error'));
+        if (result) return resolve(result);
+        return reject(new Error('No result returned from Cloudinary'));
+      });
+    });
+  }
+
+  async deleteRawFile(publicId: string): Promise<DeleteApiResponse> {
+    return new Promise((resolve, reject) => {
+      cloudinary.uploader.destroy(publicId, { resource_type: 'raw' }, (error, result) => {
+        if (error) return reject(new Error(error.message || 'Delete error'));
+        if (result) return resolve(result);
+        return reject(new Error('No result returned from Cloudinary'));
+      });
+    });
+  }
+
+  async deleteVideoFile(publicId: string): Promise<DeleteApiResponse> {
+    return new Promise((resolve, reject) => {
+      cloudinary.uploader.destroy(publicId, { resource_type: 'video' }, (error, result) => {
+        if (error) return reject(new Error(error.message || 'Delete error'));
+        if (result) return resolve(result);
+        return reject(new Error('No result returned from Cloudinary'));
+      });
+    });
+  }
+
+  getFileUrl(secureUrl: string): string {
+    if (!secureUrl) {
+      return '';
+    }
+
+    const deliveryBaseUrl = this.getDeliveryBaseUrl();
+    if (!deliveryBaseUrl) {
+      return secureUrl;
+    }
+
+    return secureUrl.replace(
+      /^https:\/\/res\.cloudinary\.com\/[^/]+/,
+      deliveryBaseUrl,
+    );
+  }
+
+  buildDeliveryUrl(params: {
+    publicId: string;
+    resourceType: 'image' | 'video' | 'raw';
+    version?: string | number;
+    format?: string;
+  }): string {
+    const { publicId, resourceType, version, format } = params;
+    if (!publicId) {
+      return '';
+    }
+
+    const deliveryBaseUrl = this.getDeliveryBaseUrl();
+    if (!deliveryBaseUrl) {
+      return '';
+    }
+
+    const versionSegment = version ? `/v${version}` : '';
+    const normalizedPublicId = publicId.replace(/^\/+/, '');
+    const needsExtension =
+      resourceType !== 'raw' &&
+      format &&
+      !normalizedPublicId.endsWith(`.${format}`);
+
+    const publicPath = needsExtension
+      ? `${normalizedPublicId}.${format}`
+      : normalizedPublicId;
+
+    return `${deliveryBaseUrl}/${resourceType}/upload${versionSegment}/${publicPath}`;
+  }
+
+  getDownloadUrl(secureUrl: string): string {
+    return this.getFileUrl(secureUrl);
   }
 }
