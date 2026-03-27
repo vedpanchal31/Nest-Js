@@ -22,6 +22,8 @@ import { ITokenPayload } from 'src/core/constants/interfaces/common';
 import { DeliveryPartnerService } from '../delivery-partners/delivery-partners.service';
 import { InvoiceService } from '../../core/services/invoice.service';
 import { NotificationType } from '../notifications/entities/notification.entity';
+import * as ExcelJS from 'exceljs';
+
 
 @Injectable()
 export class OrderService {
@@ -412,6 +414,175 @@ export class OrderService {
         total: Number(item.price) * item.quantity,
       })),
     };
+  }
+
+  async generateOrdersExcelReport(user: ITokenPayload, status?: OrderStatus, startDate?: Date, endDate?: Date, search?: string) {
+    const query = this.orderRepository.createQueryBuilder('order')
+      .leftJoinAndSelect('order.user', 'user')
+      .leftJoinAndSelect('user.profile', 'profile')
+      .leftJoinAndSelect('order.partner', 'deliveryPartner')
+      .leftJoinAndSelect('deliveryPartner.user', 'deliveryPartnerUser')
+      .leftJoinAndSelect('order.items', 'items')
+      .leftJoinAndSelect('items.product', 'product')
+      .leftJoinAndSelect('product.supplier', 'supplier')
+
+
+    if (user.userType === UserType.SUPPLIER) {
+      query.innerJoin('order.items', 'itemFilter')
+        .innerJoin('itemFilter.product', 'productFilter')
+        .andWhere('productFilter.supplier_id = :supplierId', { supplierId: user.id })
+    }
+
+    if (status !== undefined) {
+      query.andWhere('order.status = :status', { status });
+    }
+
+    if (startDate && endDate) {
+      query.andWhere('order.createdAt BETWEEN :startDate AND :endDate', { startDate, endDate });
+    }
+
+    if (search) {
+      query.andWhere('(user.name ILIKE :search OR user.email ILIKE :search OR order.id::text ILIKE :search)', { search: `%${search}%` })
+    }
+
+    const orders = await query.orderBy('order.createdAt', 'DESC').getMany()
+
+    // Create Excel workbook
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('Orders Report');
+
+    // Define Column - hide Supplier column if user is Supplier
+    const isSupplier = user.userType === UserType.SUPPLIER;
+
+    worksheet.columns = [
+      { header: 'Order Id', key: 'orderId', width: 20 },
+      { header: 'Customer Name', key: 'customerName', width: 25 },
+      { header: 'Customer Email', key: 'customerEmail', width: 30 },
+      { header: 'Product Name', key: 'productName', width: 30 },
+      ...(isSupplier ? [] : [{ header: 'Supplier', key: 'supplier', width: 25 }]),
+      { header: 'Quantity', key: 'quantity', width: 10 },
+      { header: 'Price', key: 'price', width: 15 },
+      { header: 'Total Amount', key: 'totalAmount', width: 15 },
+      { header: 'Order Status', key: 'status', width: 15 },
+      { header: 'Payment Method', key: 'paymentMethod', width: 18 },
+      { header: 'Order Date', key: 'orderDate', width: 20 },
+      { header: 'Delivery Partner', key: 'deliveryPartner', width: 25 },
+      { header: 'Shipping Address', key: 'shippingAddress', width: 40 },
+    ]
+
+    worksheet.getRow(1).font = { bold: true, size: 12 }
+    worksheet.getRow(1).fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: 'FF667EEA' },
+    }
+    worksheet.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } };
+
+    // Add data rows
+    const statusLabels: Record<number, string> = {
+      1: 'Pending',
+      2: 'Confirmed',
+      3: 'Shipped',
+      4: 'Delivered',
+      5: 'Cancelled',
+    };
+
+    const paymentMethodLabels: Record<number, string> = {
+      1: 'Cash on Delivery',
+      2: 'Online Payment',
+    };
+
+    for (const order of orders) {
+      for (const item of order.items) {
+        const productSupplier = item.product?.supplier
+        const isSupplierProduct = user.userType === UserType.SUPPLIER
+          ? productSupplier?.id === user.id
+          : true;
+
+        // Skip items not belonging to supplier if user is supplier
+        if (user.userType === UserType.SUPPLIER && !isSupplierProduct) {
+          continue;
+        }
+
+        const rowData: any = {
+          orderId: order.id,
+          customerName: order.user?.name || 'N/A',
+          customerEmail: order.user?.email || 'N/A',
+          productName: item.product?.name || 'Unknown Product',
+          quantity: item.quantity,
+          price: Number(item.price),
+          totalAmount: Number(item.price) * item.quantity,
+          status: statusLabels[order.status] || 'Unknown',
+          paymentMethod: paymentMethodLabels[order.paymentMethod] || 'Unknown',
+          orderDate: order.createdAt.toISOString(),
+          deliveryPartner: order.partner?.user?.name || 'N/A',
+          shippingAddress: `${order.addressLine1}${order.addressLine2 ? ', ' + order.addressLine2 : ''}, ${order.city}, ${order.state}, ${order.region}, ${order.country}`,
+        };
+
+        // Only add supplier column for non-supplier users
+        if (!isSupplier) {
+          rowData.supplier = productSupplier?.profile?.name || productSupplier?.email || 'N/A';
+        }
+
+        worksheet.addRow(rowData)
+      }
+    }
+
+    // Add summary section at the bottom
+    const lastRow = worksheet.rowCount;
+    const summaryStartRow = lastRow + 2;
+
+    worksheet.getCell(`A${summaryStartRow}`).value = 'Report Summary';
+    worksheet.getCell(`A${summaryStartRow}`).font = { bold: true, size: 14 };
+    worksheet.getCell(`A${summaryStartRow}`).fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: 'FF764BA2' },
+    };
+    worksheet.getCell(`A${summaryStartRow}`).font = {
+      bold: true,
+      color: { argb: 'FFFFFFFF' }
+    };
+
+    worksheet.getCell(`A${summaryStartRow + 1}`).value = 'Total Orders:';
+    worksheet.getCell(`B${summaryStartRow + 1}`).value = orders.length;
+    worksheet.getCell(`A${summaryStartRow + 1}`).font = { bold: true };
+
+    // Calculate total revenue (sum of order totalAmounts)
+    const totalRevenue = orders.reduce((sum, order) => sum + Number(order.totalAmount), 0);
+    worksheet.getCell(`A${summaryStartRow + 2}`).value = 'Total Revenue:';
+    worksheet.getCell(`B${summaryStartRow + 2}`).value = totalRevenue;
+    worksheet.getCell(`B${summaryStartRow + 2}`).numFmt = '$#,##0.00';
+    worksheet.getCell(`A${summaryStartRow + 2}`).font = { bold: true };
+
+
+    // If supplier, show their specific totals
+    if (user.userType === UserType.SUPPLIER) {
+      let supplierTotalRevenue = 0;
+      let supplierTotalItems = 0;
+
+      for (const order of orders) {
+        for (const item of order.items) {
+          if (item.product?.supplier?.id === user.id) {
+            supplierTotalRevenue += Number(item.price) * item.quantity;
+            supplierTotalItems += item.quantity;
+          }
+        }
+      }
+
+      worksheet.getCell(`A${summaryStartRow + 3}`).value = 'Your Products Revenue:';
+      worksheet.getCell(`B${summaryStartRow + 3}`).value = supplierTotalRevenue;
+      worksheet.getCell(`B${summaryStartRow + 3}`).numFmt = '$#,##0.00';
+      worksheet.getCell(`A${summaryStartRow + 3}`).font = { bold: true };
+
+      worksheet.getCell(`A${summaryStartRow + 4}`).value = 'Your Products Sold:';
+      worksheet.getCell(`B${summaryStartRow + 4}`).value = supplierTotalItems;
+      worksheet.getCell(`A${summaryStartRow + 4}`).font = { bold: true };
+    }
+
+    // Generate buffer
+    const buffer = await workbook.xlsx.writeBuffer();
+    return Buffer.from(buffer);
   }
 
   async generateInvoice(order: Order): Promise<Buffer> {

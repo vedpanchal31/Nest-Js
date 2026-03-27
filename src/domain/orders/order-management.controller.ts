@@ -10,7 +10,10 @@ import {
   DefaultValuePipe,
   ParseIntPipe,
   Req,
+  Res,
+  HttpStatus,
 } from '@nestjs/common';
+import type { Response } from 'express';
 import {
   ApiTags,
   ApiOperation,
@@ -88,5 +91,47 @@ export class OrderManagementController {
   @ApiOperation({ summary: 'Soft delete an order (Admin)' })
   async deleteOrder(@Param('id') id: string) {
     return await this.orderService.deleteOrder(id);
+  }
+
+  @Get('report/download')
+  @RoutePermission(PermissionType.VIEW_ORDERS)
+  @ApiOperation({ summary: 'Download orders Excel report (Admin/Supplier)' })
+  @ApiQuery({ name: 'status', required: false, enum: OrderStatus })
+  @ApiQuery({ name: 'startDate', required: false, type: 'string' })
+  @ApiQuery({ name: 'endDate', required: false, type: 'string' })
+  @ApiQuery({ name: 'search', required: false, type: 'string' })
+  async downloadOrdersReport(
+    @Req() req: { user: ITokenPayload },
+    @Res() res: Response,
+    @Query('status') status?: OrderStatus,
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
+    @Query('search') search?: string,
+  ) {
+    try {
+      const buffer = await this.orderService.generateOrdersExcelReport(
+        req.user,
+        status ? Number(status) : undefined,
+        startDate ? new Date(startDate) : undefined,
+        endDate ? new Date(endDate) : undefined,
+        search,
+      );
+
+      const timestamp = new Date().toISOString().split('T')[0];
+      const filename = `orders-report-${timestamp}.xlsx`;
+
+      res.set({
+        'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        'Content-Disposition': `attachment; filename=${filename}`,
+        'Content-Length': buffer.length,
+      });
+
+      res.status(HttpStatus.OK).send(buffer);
+    } catch (error) {
+      res.status(HttpStatus.BAD_REQUEST).json({
+        status: false,
+        message: error.message,
+      });
+    }
   }
 }

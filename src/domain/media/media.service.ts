@@ -59,7 +59,7 @@ export class MediaService {
     [MediaType.DOCUMENT]: [
       'application/msword',
       'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-      'application/vnd.openxmlformats-officedocument.presentationml.presentation',  
+      'application/vnd.openxmlformats-officedocument.presentationml.presentation',
       'text/plain',
     ],
   };
