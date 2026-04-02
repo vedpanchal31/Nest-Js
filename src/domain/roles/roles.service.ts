@@ -23,14 +23,17 @@ export class RolesService {
     private readonly permissionsRepository: Repository<Permission>,
     @InjectRepository(User)
     private readonly usersRepository: Repository<User>,
-  ) {}
+  ) { }
 
+
+  // 1
   async getAllRoles() {
     return await this.rolesRepository.find({
       relations: ['permissions', 'createdBy'],
     });
   }
 
+  // 2
   async getRoleById(id: string) {
     const role = await this.rolesRepository.findOne({
       where: { id },
@@ -40,6 +43,7 @@ export class RolesService {
     return role;
   }
 
+  // 3
   async createRole(dto: CreateRoleDto) {
     const existingRole = await this.rolesRepository.findOne({
       where: { name: dto.name },
@@ -63,6 +67,7 @@ export class RolesService {
     return await this.rolesRepository.save(role);
   }
 
+  // 4
   async updateRole(id: string, dto: UpdateRoleDto) {
     const role = await this.getRoleById(id);
 
@@ -77,16 +82,19 @@ export class RolesService {
     return await this.rolesRepository.save(role);
   }
 
+  // 5
   async deleteRole(id: string) {
     const role = await this.getRoleById(id);
     return await this.rolesRepository.remove(role);
   }
 
+  // 6
   async getPermissionsByRoleId(roleId: string) {
     const role = await this.getRoleById(roleId);
     return role.permissions;
   }
 
+  // 7
   async updateRolePermissions(roleId: string, dto: UpdateRolePermissionsDto) {
     const role = await this.getRoleById(roleId);
 
@@ -98,10 +106,12 @@ export class RolesService {
     return await this.rolesRepository.save(role);
   }
 
+  // 8
   async getAllPermissions() {
     return await this.permissionsRepository.find();
   }
 
+  // 9
   async assignRoleToUser(dto: AssignRoleDto) {
     const user = await this.usersRepository.findOne({
       where: { id: dto.userId },
@@ -119,6 +129,7 @@ export class RolesService {
     return await this.usersRepository.save(user);
   }
 
+  // 10
   async hasAccess(roleId: string, permissionName: string): Promise<boolean> {
     const role = await this.rolesRepository.findOne({
       where: { id: roleId },

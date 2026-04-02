@@ -181,4 +181,26 @@ describe('OrderManagementController - Comprehensive', () => {
       expect(result).toEqual(mockOrder);
     });
   });
+
+  describe('downloadOrdersReport - Excel Report Download', () => {
+    it('should handle report generation error', async () => {
+      service.generateOrdersExcelReport.mockRejectedValue(new Error('Report generation failed'));
+
+      const mockRes = {
+        status: jest.fn().mockReturnThis(),
+        json: jest.fn(),
+      } as any;
+
+      await controller.downloadOrdersReport(
+        { user: mockAdminToken } as any,
+        mockRes,
+      );
+
+      expect(mockRes.status).toHaveBeenCalledWith(400);
+      expect(mockRes.json).toHaveBeenCalledWith({
+        status: false,
+        message: 'Report generation failed',
+      });
+    });
+  });
 });

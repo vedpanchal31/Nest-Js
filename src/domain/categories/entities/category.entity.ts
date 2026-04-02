@@ -8,6 +8,7 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 import { Product } from 'src/domain/products/entities/product.entity';
+import { CategoryImage } from './category-image.entity';
 
 @Entity('categories')
 export class Category {
@@ -20,8 +21,8 @@ export class Category {
   @Column({ nullable: true })
   description: string;
 
-  @Column({ nullable: true })
-  image: string;
+  @OneToMany(() => CategoryImage, (image) => image.category, { cascade: true })
+  images: CategoryImage[];
 
   @OneToMany(() => Product, (product) => product.category)
   products: Product[];

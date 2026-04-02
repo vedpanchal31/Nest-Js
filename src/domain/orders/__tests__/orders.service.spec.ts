@@ -10,6 +10,7 @@ import { DeliveryPartnerService } from '../../delivery-partners/delivery-partner
 import { InvoiceService } from '../../../core/services/invoice.service';
 import { OrderStatus, PaymentMethod, UserType } from '../../../core/constants/app.constants';
 import { getQueueToken } from '@nestjs/bull';
+import { NotificationType } from 'src/domain/notifications/entities/notification.entity';
 
 describe('OrderService - Comprehensive', () => {
   let service: OrderService;
@@ -80,6 +81,7 @@ describe('OrderService - Comprehensive', () => {
 
   const mockOrderRepository = {
     findOne: jest.fn(),
+    find: jest.fn(),
     findAndCount: jest.fn(),
     save: jest.fn().mockResolvedValue(mockOrder),
     softRemove: jest.fn().mockResolvedValue(mockOrder),
@@ -586,6 +588,196 @@ describe('OrderService - Comprehensive', () => {
       await expect(service.getPublicOrderDetails('non-existent')).rejects.toThrow(
         NotFoundException,
       );
+    });
+  });
+
+  describe('sendStatusChangeNotification - Notification Logic', () => {
+    it('should send CONFIRMED status notification', async () => {
+      const confirmedOrder = {
+        ...mockOrder,
+        status: OrderStatus.CONFIRMED,
+        user: { id: 'user-uuid' },
+      };
+
+      await (service as any).sendStatusChangeNotification(confirmedOrder);
+
+      expect(notificationsQueue.add).toHaveBeenCalledWith(
+        'send-notification',
+        expect.objectContaining({
+          title: 'Order Confirmed',
+          eventName: 'order.confirmed',
+          type: NotificationType.ORDER,
+        }),
+      );
+    });
+
+    it('should send SHIPPED status notification', async () => {
+      const shippedOrder = {
+        ...mockOrder,
+        status: OrderStatus.SHIPPED,
+        user: { id: 'user-uuid' },
+      };
+
+      await (service as any).sendStatusChangeNotification(shippedOrder);
+
+      expect(notificationsQueue.add).toHaveBeenCalledWith(
+        'send-notification',
+        expect.objectContaining({
+          title: 'Order Shipped',
+          eventName: 'order.shipped',
+          type: NotificationType.DELIVERY,
+        }),
+      );
+    });
+
+    it('should send DELIVERED status notification', async () => {
+      const deliveredOrder = {
+        ...mockOrder,
+        status: OrderStatus.DELIVERED,
+        user: { id: 'user-uuid' },
+      };
+
+      await (service as any).sendStatusChangeNotification(deliveredOrder);
+
+      expect(notificationsQueue.add).toHaveBeenCalledWith(
+        'send-notification',
+        expect.objectContaining({
+          title: 'Order Delivered',
+          eventName: 'order.delivered',
+          type: NotificationType.DELIVERY,
+        }),
+      );
+    });
+
+    it('should send CANCELLED status notification', async () => {
+      const cancelledOrder = {
+        ...mockOrder,
+        status: OrderStatus.CANCELLED,
+        user: { id: 'user-uuid' },
+      };
+
+      await (service as any).sendStatusChangeNotification(cancelledOrder);
+
+      expect(notificationsQueue.add).toHaveBeenCalledWith(
+        'send-notification',
+        expect.objectContaining({
+          title: 'Order Cancelled',
+          eventName: 'order.cancelled',
+        }),
+      );
+    });
+
+    it('should not send notification for PENDING status', async () => {
+      const pendingOrder = {
+        ...mockOrder,
+        status: OrderStatus.PENDING,
+        user: { id: 'user-uuid' },
+      };
+
+      await (service as any).sendStatusChangeNotification(pendingOrder);
+
+      expect(notificationsQueue.add).not.toHaveBeenCalled();
+    });
+
+    it('should not send notification when user is missing', async () => {
+      const orderWithoutUser = {
+        ...mockOrder,
+        status: OrderStatus.CONFIRMED,
+        user: null,
+      };
+
+      await (service as any).sendStatusChangeNotification(orderWithoutUser);
+
+      expect(notificationsQueue.add).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('generateOrdersExcelReport - Excel Generation', () => {
+    it('should generate excel report for admin user', async () => {
+      const mockAdminUser = {
+        id: 'admin-uuid',
+        userType: UserType.ADMIN,
+        email: 'admin@example.com',
+      };
+
+      const mockReportOrder = {
+        ...mockOrder,
+        items: [{
+          id: 'item-uuid',
+          quantity: 2,
+          price: 99.99,
+          order: mockOrder,
+          product: {
+            id: 'product-uuid',
+            name: 'Test Product',
+            supplier: {
+              id: 'supplier-uuid',
+              email: 'supplier@example.com',
+              profile: { name: 'Supplier Name' },
+            },
+          },
+        }],
+      };
+
+      // Reset and setup mock for this test
+      orderRepository.createQueryBuilder.mockReturnValue({
+        leftJoinAndSelect: jest.fn().mockReturnThis(),
+        where: jest.fn().mockReturnThis(),
+        andWhere: jest.fn().mockReturnThis(),
+        orderBy: jest.fn().mockReturnThis(),
+        getMany: jest.fn().mockResolvedValue([mockReportOrder]),
+      });
+
+      const result = await service.generateOrdersExcelReport(mockAdminUser as any);
+
+      expect(result).toBeInstanceOf(Buffer);
+      expect(orderRepository.createQueryBuilder).toHaveBeenCalled();
+    });
+
+    it('should generate report for supplier with supplier-specific filtering', async () => {
+      const mockSupplierUser = {
+        id: 'supplier-uuid',
+        userType: UserType.SUPPLIER,
+        email: 'supplier@example.com',
+      };
+
+      const mockReportOrder = {
+        ...mockOrder,
+        items: [{
+          id: 'item-uuid',
+          quantity: 2,
+          price: 99.99,
+          order: mockOrder,
+          product: {
+            id: 'product-uuid',
+            name: 'Test Product',
+            supplier: {
+              id: 'supplier-uuid',
+              email: 'supplier@example.com',
+              profile: { name: 'Supplier Name' },
+            },
+          },
+        }],
+      };
+
+      const mockInnerJoin = jest.fn().mockReturnThis();
+      const mockAndWhere = jest.fn().mockReturnThis();
+
+      // Reset and setup mock for supplier filtering
+      orderRepository.createQueryBuilder.mockReturnValue({
+        leftJoinAndSelect: jest.fn().mockReturnThis(),
+        innerJoin: mockInnerJoin,
+        where: jest.fn().mockReturnThis(),
+        andWhere: mockAndWhere,
+        orderBy: jest.fn().mockReturnThis(),
+        getMany: jest.fn().mockResolvedValue([mockReportOrder]),
+      });
+
+      const result = await service.generateOrdersExcelReport(mockSupplierUser as any);
+
+      expect(result).toBeInstanceOf(Buffer);
+      expect(mockInnerJoin).toHaveBeenCalled();
+      expect(mockAndWhere).toHaveBeenCalled();
     });
   });
 });

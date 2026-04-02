@@ -16,6 +16,7 @@ import { OtpType, TokenType, UserType } from 'src/core/constants/app.constants';
 import { ITokenPayload } from 'src/core/constants/interfaces/common';
 import { JwtService, JwtSignOptions } from '@nestjs/jwt';
 import { MailerService } from '@nestjs-modules/mailer';
+import { EmailTemplateService } from 'src/core/mailer/email-template.service';
 import { VerifyOtpDto } from './dtos/verify-otp.dto';
 import { ResendOtpDto } from './dtos/resend-otp.dto';
 import { ForgotPasswordDto } from './dtos/forgot-password.dto';
@@ -30,6 +31,7 @@ export class AuthService {
     private readonly usersRepository: Repository<User>,
     private readonly _jwt: JwtService,
     private readonly mailerService: MailerService,
+    private readonly emailTemplateService: EmailTemplateService,
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
     @InjectQueue('notifications') private readonly notificationsQueue: Queue,
   ) { }
@@ -38,16 +40,36 @@ export class AuthService {
     return Math.floor(100000 + Math.random() * 900000).toString();
   }
 
-  private async _sendOtpEmail(email: string, otp: string, type: OtpType) {
-    const subject =
-      type === OtpType.EMAIL_VERIFICATION
-        ? 'Verify Your Email'
-        : 'Reset Your Password';
-    await this.mailerService.sendMail({
-      to: email,
-      subject: subject,
-      text: `Your OTP is: ${otp}. It expires in 10 minutes.`,
-    });
+  private async _sendOtpEmail(email: string, otp: string, type: OtpType, userName?: string) {
+    if (type === OtpType.EMAIL_VERIFICATION) {
+      const { html, subject } = this.emailTemplateService.renderOtpEmail({
+        subject: 'Verify Your Email - Velora',
+        title: 'Verify Your Email',
+        message: `Thank you for signing up! Please use the verification code below to complete your registration.`,
+        otp,
+        userName,
+      });
+
+      await this.mailerService.sendMail({
+        to: email,
+        subject,
+        html,
+      });
+    } else {
+      const { html, subject } = this.emailTemplateService.renderPasswordResetEmail({
+        subject: 'Reset Your Password - Velora',
+        title: 'Password Reset Request',
+        message: `We received a request to reset your password. Use the verification code below to complete the process.`,
+        otp,
+        userName,
+      });
+
+      await this.mailerService.sendMail({
+        to: email,
+        subject,
+        html,
+      });
+    }
   }
 
   private async _signToken(
@@ -153,7 +175,7 @@ export class AuthService {
       600000,
     );
 
-    await this._sendOtpEmail(email, otp, OtpType.FORGOT_PASSWORD);
+    await this._sendOtpEmail(email, otp, OtpType.FORGOT_PASSWORD, user.name);
 
     return {
       message: 'OTP sent successfully',
@@ -178,7 +200,7 @@ export class AuthService {
     // Store OTP in Redis for 10 minutes
     await this.cacheManager.set(`otp:${email}:${type}`, otp, 600000);
 
-    await this._sendOtpEmail(user.email, otp, type);
+    await this._sendOtpEmail(user.email, otp, type, user.name);
     return {
       message: 'OTP sent successfully',
     };
@@ -312,7 +334,7 @@ export class AuthService {
 
     const user = await this.usersRepository.findOne({
       where: { email },
-      relations: ['roles'],
+      relations: ['roles', 'roles.permissions'],
     });
     if (!user) {
       throw new UnauthorizedException({
@@ -367,6 +389,14 @@ export class AuthService {
         name: user.name,
         email: user.email,
         userType: user.userType,
+        roles: user.roles?.map((role) => ({
+          id: role.id,
+          name: role.name,
+          permissions: role.permissions?.map((perm) => ({
+            id: perm.id,
+            name: perm.name,
+          })) || [],
+        })) || [],
       },
     };
   }

@@ -41,6 +41,7 @@
     "@nestjs/typeorm": "^11.0.0",
     "@types/cron": "^2.0.1",
     "@types/puppeteer": "^5.4.7",
+    "adm-zip": "^0.5.16",
     "bcrypt": "^6.0.0",
     "buffer-to-stream": "^1.0.0",
     "bull": "^4.16.5",
@@ -68,6 +69,7 @@
     "@nestjs/cli": "^11.0.0",
     "@nestjs/schematics": "^11.0.0",
     "@nestjs/testing": "^11.0.1",
+    "@types/adm-zip": "^0.5.8",
     "@types/bcrypt": "^6.0.0",
     "@types/buffer-to-stream": "^1.0.3",
     "@types/express": "^5.0.0",
@@ -110,6 +112,7 @@
     "coveragePathIgnorePatterns": [
       "database/migrations/",
       "database/seeders/",
+      "database/data-source.ts",
       "/entities/",
       "node_modules/",
       "dist/",
@@ -119,7 +122,8 @@
       "decorators/",
       "guards/",
       "interceptors/",
-      "dto/"
+      "dto/",
+      "config/"
     ],
     "coverageDirectory": "../coverage",
     "testEnvironment": "node",

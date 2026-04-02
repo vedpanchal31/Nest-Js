@@ -21,7 +21,6 @@ import {
 import { UsersService } from './users.service';
 import { AuthGuard } from 'src/core/guards/auth.guard';
 import { RoleGuard } from 'src/core/guards/role.guard';
-import { Roles } from 'src/core/decorators/roles.decorator';
 import { RoutePermission } from 'src/core/decorators/route-permission.decorator';
 import { UserType, PermissionType } from 'src/core/constants/app.constants';
 import { CreateManagedUserDto } from './dtos/create-managed-user.dto';
@@ -30,10 +29,9 @@ import { UpdateManagedUserDto } from './dtos/update-managed-user.dto';
 @ApiTags('User Management')
 @Controller('user-management')
 @UseGuards(AuthGuard, RoleGuard)
-@Roles(UserType.ADMIN)
 @ApiBearerAuth()
 export class UserManagementController {
-  constructor(private readonly usersService: UsersService) {}
+  constructor(private readonly usersService: UsersService) { }
 
   @Get()
   @RoutePermission(PermissionType.VIEW_USERS)

@@ -14,8 +14,9 @@ import {
   Patch,
   Param,
   Delete,
+  Res,
 } from '@nestjs/common';
-import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
+import { FileInterceptor, FilesInterceptor, AnyFilesInterceptor } from '@nestjs/platform-express';
 import {
   ApiBearerAuth,
   ApiBody,
@@ -35,14 +36,19 @@ import { Public } from 'src/core/decorators/public.decorator';
 import { UserType, PermissionType } from 'src/core/constants/app.constants';
 import type { MulterFile } from 'src/core/cloudinary/cloudinary.service';
 import { ITokenPayload } from 'src/core/constants/interfaces/common';
+import type { Response } from 'express';
 import { Request } from 'express';
 import { GetProductDto } from './dtos/get-product.dto';
 import { UpdateProductDto } from './dtos/update-product.dto';
+import { BulkUploadService, ExcelColumn } from 'src/core/bulk-upload/bulk-upload.service';
 
 @ApiTags('Products')
 @Controller('products')
 export class ProductsController {
-  constructor(private readonly productsService: ProductsService) { }
+  constructor(
+    private readonly productsService: ProductsService,
+    private readonly bulkUploadService: BulkUploadService,
+  ) { }
 
   @Post()
   @UseGuards(AuthGuard, RoleGuard)
@@ -157,5 +163,124 @@ export class ProductsController {
     @Req() req: Request & { user: ITokenPayload },
   ) {
     return this.productsService.deleteProduct(id, req.user);
+  }
+
+  @Get('bulk/sample')
+  @UseGuards(AuthGuard, RoleGuard)
+  @Roles(UserType.ADMIN, UserType.SUBADMIN, UserType.SUPPLIER)
+  @RoutePermission(PermissionType.CREATE_PRODUCT)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Download sample Excel file for bulk product upload' })
+  async downloadSample(
+    @Req() req: Request & { user: ITokenPayload },
+    @Res() res: Response,
+  ): Promise<void> {
+    // Get all categories and suppliers for dropdowns
+    const categories = await this.productsService.getAllCategoryNames();
+    const isAdmin = req.user.userType === UserType.ADMIN;
+    let suppliers: string[] = [];
+    if (isAdmin) {
+      suppliers = await this.productsService.getAllSupplierNames();
+    }
+
+    // Column order: Category (1), Supplier (2 - admin only), Name, Description, Price, Images
+    const columns: ExcelColumn[] = [
+      { header: 'Category*', key: 'category', width: 25, required: true, dropdown: categories },
+    ];
+
+    // Add Supplier column for ADMIN users (2nd column)
+    if (isAdmin) {
+      columns.push({
+        header: 'Supplier*',
+        key: 'supplier',
+        width: 30,
+        required: true,
+        dropdown: suppliers,
+      });
+    }
+
+    columns.push(
+      { header: 'Name*', key: 'name', width: 30, required: true },
+      { header: 'Description*', key: 'description', width: 50, required: true },
+      { header: 'Price*', key: 'price', width: 15, required: true },
+      { header: 'Images', key: 'images', width: 40 },
+    );
+
+    const sampleData = [
+      {
+        category: categories.length > 0 ? categories[0] : 'Electronics',
+        ...(isAdmin && { supplier: suppliers.length > 0 ? suppliers[0] : 'Supplier Name' }),
+        name: 'Wireless Mouse',
+        description: 'A high-quality wireless mouse with ergonomic design',
+        price: 29.99,
+        images: 'mouse1.jpg, mouse2.jpg',
+      },
+      {
+        category: categories.length > 0 ? categories[0] : 'Electronics',
+        ...(isAdmin && { supplier: suppliers.length > 0 ? suppliers[0] : 'Supplier Name' }),
+        name: 'Gaming Keyboard',
+        description: 'RGB mechanical gaming keyboard with blue switches',
+        price: 89.99,
+        images: 'keyboard1.png',
+      },
+    ];
+
+    return await this.bulkUploadService.generateSampleExcel(
+      columns,
+      sampleData,
+      'products_sample.xlsx',
+      'Products',
+      res,
+    );
+  }
+
+  @Post('bulk/upload')
+  @UseGuards(AuthGuard, RoleGuard)
+  @Roles(UserType.ADMIN, UserType.SUBADMIN, UserType.SUPPLIER)
+  @RoutePermission(PermissionType.CREATE_PRODUCT)
+  @ApiBearerAuth()
+  @ApiConsumes('multipart/form-data')
+  @ApiOperation({ summary: 'Bulk upload products from Excel with images' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      required: ['excel', 'images'],
+      properties: {
+        excel: {
+          type: 'string',
+          format: 'binary',
+          description: 'Excel file (.xlsx) containing product data',
+        },
+        images: {
+          type: 'string',
+          format: 'binary',
+          description: 'ZIP file containing product images (required)',
+        },
+      },
+    },
+  })
+  @ApiResponse({ status: 201, description: 'Products uploaded successfully' })
+  @ApiResponse({ status: 400, description: 'Validation errors' })
+  @UseInterceptors(AnyFilesInterceptor())
+  async bulkUpload(
+    @Req() req: Request & { user: ITokenPayload },
+    @UploadedFiles() files: Array<Express.Multer.File>,
+  ) {
+    const excelFile = files.find((f) =>
+      f.mimetype.includes('spreadsheet') || f.originalname.endsWith('.xlsx'),
+    );
+    const zipFile = files.find((f) =>
+      f.mimetype === 'application/zip' || f.originalname.endsWith('.zip'),
+    );
+
+    if (!excelFile) {
+      throw new BadRequestException('Excel file is required');
+    }
+
+    return await this.productsService.bulkUploadProducts(
+      req.user,
+      excelFile.buffer,
+      zipFile?.buffer,
+    );
   }
 }

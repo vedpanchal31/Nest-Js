@@ -162,4 +162,43 @@ describe('OrdersController - Comprehensive', () => {
       expect(result.status).toBe(5);
     });
   });
+
+  describe('downloadInvoice - Invoice Download', () => {
+    it('should handle invoice download error', async () => {
+      service.getOrderSummary.mockRejectedValue(new Error('Order not found'));
+
+      const mockRes = {
+        set: jest.fn().mockReturnThis(),
+        status: jest.fn().mockReturnThis(),
+        json: jest.fn(),
+      } as any;
+
+      await controller.downloadInvoice({ user: mockUserToken } as any, 'order-uuid', mockRes);
+
+      expect(mockRes.status).toHaveBeenCalledWith(400);
+      expect(mockRes.json).toHaveBeenCalledWith({
+        status: false,
+        message: 'Order not found',
+      });
+    });
+  });
+
+  describe('getPublicOrderDetails - Public Order Page', () => {
+    it('should return public order details HTML', async () => {
+      service.getPublicOrderDetails.mockResolvedValue(mockOrder);
+      service.renderOrderDetailsHTML.mockReturnValue('<html>Order Details</html>');
+
+      const mockRes = {
+        setHeader: jest.fn().mockReturnThis(),
+        send: jest.fn(),
+      } as any;
+
+      await controller.getPublicOrderDetails('order-uuid', mockRes);
+
+      expect(service.getPublicOrderDetails).toHaveBeenCalledWith('order-uuid');
+      expect(service.renderOrderDetailsHTML).toHaveBeenCalledWith(mockOrder);
+      expect(mockRes.setHeader).toHaveBeenCalledWith('Content-Type', 'text/html');
+      expect(mockRes.send).toHaveBeenCalledWith('<html>Order Details</html>');
+    });
+  });
 });

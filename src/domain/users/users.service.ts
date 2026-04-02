@@ -21,7 +21,7 @@ export class UsersService {
     @InjectRepository(User)
     private readonly usersRepository: Repository<User>,
     private readonly mailerService: MailerService,
-  ) {}
+  ) { }
 
   async getAllUsers(
     page: number,

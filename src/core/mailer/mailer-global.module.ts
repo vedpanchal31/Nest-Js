@@ -1,6 +1,7 @@
 import { Global, Module } from '@nestjs/common';
 import { MailerModule } from '@nestjs-modules/mailer';
 import { ConfigService } from '@nestjs/config';
+import { EmailTemplateService } from './email-template.service';
 
 @Global()
 @Module({
@@ -23,6 +24,7 @@ import { ConfigService } from '@nestjs/config';
       }),
     }),
   ],
-  exports: [MailerModule],
+  providers: [EmailTemplateService],
+  exports: [MailerModule, EmailTemplateService],
 })
-export class MailerGlobalModule {}
+export class MailerGlobalModule { }
