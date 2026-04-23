@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ValidationPipe, CanActivate } from '@nestjs/common';
 import request from 'supertest';
@@ -48,7 +47,9 @@ describe('OrdersController (e2e)', () => {
       status: 1,
       totalAmount: 199.98,
     }),
-    renderOrderDetailsHTML: jest.fn().mockReturnValue('<html>Order Details</html>'),
+    renderOrderDetailsHTML: jest
+      .fn()
+      .mockReturnValue('<html>Order Details</html>'),
     getManagementOrders: jest.fn().mockResolvedValue({
       data: [mockOrder],
       total: 1,
@@ -59,7 +60,9 @@ describe('OrdersController (e2e)', () => {
     getManagementOrderDetails: jest.fn().mockResolvedValue(mockOrder),
     updateOrderStatus: jest.fn().mockResolvedValue({ ...mockOrder, status: 2 }),
     deleteOrder: jest.fn().mockResolvedValue(mockOrder),
-    generateOrdersExcelReport: jest.fn().mockResolvedValue(Buffer.from('excel-content')),
+    generateOrdersExcelReport: jest
+      .fn()
+      .mockResolvedValue(Buffer.from('excel-content')),
   };
 
   const mockAuthGuard: CanActivate = {
@@ -96,7 +99,9 @@ describe('OrdersController (e2e)', () => {
       .compile();
 
     app = moduleFixture.createNestApplication();
-    app.useGlobalPipes(new ValidationPipe({ transform: true, whitelist: true }));
+    app.useGlobalPipes(
+      new ValidationPipe({ transform: true, whitelist: true }),
+    );
     await app.init();
   });
 

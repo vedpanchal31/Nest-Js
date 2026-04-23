@@ -1,4 +1,4 @@
-import { MigrationInterface, QueryRunner, Table, TableForeignKey } from 'typeorm';
+import { MigrationInterface, QueryRunner, Table } from 'typeorm';
 
 export class CreateMediaTable1774431438474 implements MigrationInterface {
   name = 'CreateMediaTable1774431438474';

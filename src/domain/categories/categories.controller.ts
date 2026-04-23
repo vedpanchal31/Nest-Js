@@ -25,7 +25,11 @@ import {
   ApiConsumes,
   ApiResponse,
 } from '@nestjs/swagger';
-import { FileInterceptor, FilesInterceptor, AnyFilesInterceptor } from '@nestjs/platform-express';
+import {
+  FileInterceptor,
+  FilesInterceptor,
+  AnyFilesInterceptor,
+} from '@nestjs/platform-express';
 import type { Response } from 'express';
 import { CategoriesService } from './categories.service';
 import { AuthGuard } from 'src/core/guards/auth.guard';
@@ -36,7 +40,10 @@ import { UserType, PermissionType } from 'src/core/constants/app.constants';
 import { Public } from 'src/core/decorators/public.decorator';
 import { CreateCategoryDto } from './dtos/create-category.dto';
 import { UpdateCategoryDto } from './dtos/update-category.dto';
-import { BulkUploadService, ExcelColumn } from 'src/core/bulk-upload/bulk-upload.service';
+import {
+  BulkUploadService,
+  ExcelColumn,
+} from 'src/core/bulk-upload/bulk-upload.service';
 
 @ApiTags('Categories')
 @Controller('categories')
@@ -44,7 +51,7 @@ export class CategoriesController {
   constructor(
     private readonly categoriesService: CategoriesService,
     private readonly bulkUploadService: BulkUploadService,
-  ) { }
+  ) {}
 
   @Get()
   @Public()
@@ -74,7 +81,9 @@ export class CategoriesController {
   @Roles(UserType.ADMIN, UserType.SUBADMIN)
   @RoutePermission(PermissionType.CREATE_CATEGORY)
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Download sample Excel file for bulk category upload' })
+  @ApiOperation({
+    summary: 'Download sample Excel file for bulk category upload',
+  })
   async downloadSample(@Res() res: Response): Promise<void> {
     const columns: ExcelColumn[] = [
       { header: 'Name*', key: 'name', width: 30, required: true },
@@ -83,8 +92,16 @@ export class CategoriesController {
     ];
 
     const sampleData = [
-      { name: 'Electronics', description: 'Electronic devices and gadgets', image: 'electronics.jpg' },
-      { name: 'Clothing', description: 'Fashion and apparel', image: 'clothing.png' },
+      {
+        name: 'Electronics',
+        description: 'Electronic devices and gadgets',
+        image: 'electronics.jpg',
+      },
+      {
+        name: 'Clothing',
+        description: 'Fashion and apparel',
+        image: 'clothing.png',
+      },
     ];
 
     return await this.bulkUploadService.generateSampleExcel(
@@ -125,11 +142,13 @@ export class CategoriesController {
   @ApiResponse({ status: 400, description: 'Validation errors' })
   @UseInterceptors(AnyFilesInterceptor())
   async bulkUpload(@UploadedFiles() files: Array<Express.Multer.File>) {
-    const excelFile = files.find((f) =>
-      f.mimetype.includes('spreadsheet') || f.originalname.endsWith('.xlsx'),
+    const excelFile = files.find(
+      (f) =>
+        f.mimetype.includes('spreadsheet') || f.originalname.endsWith('.xlsx'),
     );
-    const zipFile = files.find((f) =>
-      f.mimetype === 'application/zip' || f.originalname.endsWith('.zip'),
+    const zipFile = files.find(
+      (f) =>
+        f.mimetype === 'application/zip' || f.originalname.endsWith('.zip'),
     );
 
     if (!excelFile) {
@@ -178,7 +197,10 @@ export class CategoriesController {
     @Body() createCategoryDto: CreateCategoryDto,
     @UploadedFiles() imageFiles?: Array<Express.Multer.File>,
   ) {
-    return await this.categoriesService.createCategory(createCategoryDto, imageFiles);
+    return await this.categoriesService.createCategory(
+      createCategoryDto,
+      imageFiles,
+    );
   }
 
   @Patch(':id')
@@ -195,7 +217,11 @@ export class CategoriesController {
     @Body() updateCategoryDto: UpdateCategoryDto,
     @UploadedFile() imageFile?: Express.Multer.File,
   ) {
-    return await this.categoriesService.updateCategory(id, updateCategoryDto, imageFile);
+    return await this.categoriesService.updateCategory(
+      id,
+      updateCategoryDto,
+      imageFile,
+    );
   }
 
   @Delete(':id')

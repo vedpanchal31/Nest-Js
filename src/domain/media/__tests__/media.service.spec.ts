@@ -44,7 +44,11 @@ describe('MediaService - Comprehensive', () => {
     deleteFile: jest.fn().mockResolvedValue({ result: 'ok' }),
     deleteRawFile: jest.fn().mockResolvedValue({ result: 'ok' }),
     deleteVideoFile: jest.fn().mockResolvedValue({ result: 'ok' }),
-    buildDeliveryUrl: jest.fn().mockReturnValue('https://cloudinary.com/media/images/1234567890-test.png'),
+    buildDeliveryUrl: jest
+      .fn()
+      .mockReturnValue(
+        'https://cloudinary.com/media/images/1234567890-test.png',
+      ),
   };
 
   beforeEach(async () => {
@@ -107,7 +111,9 @@ describe('MediaService - Comprehensive', () => {
         await (service as any).validateFile(mockFile);
         fail('Expected BadRequestException to be thrown');
       } catch (error: any) {
-        expect(error.message).toContain('File type application/x-msdownload is not allowed');
+        expect(error.message).toContain(
+          'File type application/x-msdownload is not allowed',
+        );
       }
     });
 
@@ -129,7 +135,9 @@ describe('MediaService - Comprehensive', () => {
 
   describe('getCloudinaryResourceType - Resource Type Mapping', () => {
     it('should return image for IMAGE type', () => {
-      const result = (service as any).getCloudinaryResourceType(MediaType.IMAGE);
+      const result = (service as any).getCloudinaryResourceType(
+        MediaType.IMAGE,
+      );
       expect(result).toBe('image');
     });
 
@@ -139,7 +147,9 @@ describe('MediaService - Comprehensive', () => {
     });
 
     it('should return video for VIDEO type', () => {
-      const result = (service as any).getCloudinaryResourceType(MediaType.VIDEO);
+      const result = (service as any).getCloudinaryResourceType(
+        MediaType.VIDEO,
+      );
       expect(result).toBe('video');
     });
 
@@ -179,7 +189,9 @@ describe('MediaService - Comprehensive', () => {
         buffer: Buffer.from('test'),
       } as Express.Multer.File;
 
-      cloudinaryService.uploadFile.mockRejectedValue(new Error('Upload failed'));
+      cloudinaryService.uploadFile.mockRejectedValue(
+        new Error('Upload failed'),
+      );
 
       await expect(service.uploadFilesPublic([mockFile])).rejects.toThrow(
         BadRequestException,
@@ -217,7 +229,9 @@ describe('MediaService - Comprehensive', () => {
       await service.findAllPublic({ page: 1, limit: 20 });
 
       const queryBuilder = mediaRepository.createQueryBuilder();
-      expect(queryBuilder.where).toHaveBeenCalledWith('media.deletedAt IS NULL');
+      expect(queryBuilder.where).toHaveBeenCalledWith(
+        'media.deletedAt IS NULL',
+      );
     });
   });
 
@@ -283,10 +297,14 @@ describe('MediaService - Comprehensive', () => {
 
     it('should handle Cloudinary cleanup errors gracefully', async () => {
       mediaRepository.findOne.mockResolvedValue(mockMedia);
-      cloudinaryService.deleteFile.mockRejectedValue(new Error('Delete failed'));
+      cloudinaryService.deleteFile.mockRejectedValue(
+        new Error('Delete failed'),
+      );
 
       // Suppress console.error for this test
-      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => { });
+      const consoleErrorSpy = jest
+        .spyOn(console, 'error')
+        .mockImplementation(() => {});
 
       // Should not throw, just log error
       await expect(service.removePublic('media-uuid')).resolves.not.toThrow();
@@ -306,7 +324,9 @@ describe('MediaService - Comprehensive', () => {
       await service.getStatsPublic();
 
       const queryBuilder = mediaRepository.createQueryBuilder();
-      expect(queryBuilder.where).toHaveBeenCalledWith('media.deletedAt IS NULL');
+      expect(queryBuilder.where).toHaveBeenCalledWith(
+        'media.deletedAt IS NULL',
+      );
     });
   });
 
@@ -316,7 +336,9 @@ describe('MediaService - Comprehensive', () => {
 
       const result = await service.getDownloadUrl('media-uuid');
 
-      expect(result).toBe('https://cloudinary.com/media/images/1234567890-test.png');
+      expect(result).toBe(
+        'https://cloudinary.com/media/images/1234567890-test.png',
+      );
     });
 
     it('should throw NotFoundException when media not found', async () => {

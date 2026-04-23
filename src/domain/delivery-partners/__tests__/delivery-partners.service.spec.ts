@@ -386,7 +386,6 @@ describe('DeliveryPartnerService - Comprehensive', () => {
         getMany: jest.fn().mockResolvedValue([]),
       };
       statusRepository.createQueryBuilder.mockReturnValue(
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
         mockQueryBuilder as any,
       );
 
@@ -408,7 +407,6 @@ describe('DeliveryPartnerService - Comprehensive', () => {
         getMany: jest.fn().mockResolvedValue([mockPartnerStatus]),
       };
       statusRepository.createQueryBuilder.mockReturnValue(
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
         mockQueryBuilder as any,
       );
       requestRepository.findOne.mockResolvedValue({
@@ -417,7 +415,6 @@ describe('DeliveryPartnerService - Comprehensive', () => {
 
       await service.dispatchOrder('order-uuid', 40.7128, -74.006, 1);
 
-      // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(requestRepository.findOne).toHaveBeenCalledWith({
         where: {
           order: { id: 'order-uuid' },
@@ -549,7 +546,6 @@ describe('DeliveryPartnerService - Comprehensive', () => {
 
       await service.listAllPartners(1, 10);
 
-      // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(partnerRepository.findAndCount).toHaveBeenCalledWith(
         expect.objectContaining({
           relations: ['user', 'status'],
@@ -610,7 +606,6 @@ describe('DeliveryPartnerService - Comprehensive', () => {
 
       await service.deletePartner('partner-uuid');
 
-      // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(partnerRepository.softRemove).toHaveBeenCalledWith(mockPartner);
     });
   });
@@ -640,18 +635,16 @@ describe('DeliveryPartnerService - Comprehensive', () => {
       // First call returns null (no existing request), second call returns a request
       requestRepository.findOne
         .mockResolvedValueOnce(null)
-        .mockResolvedValueOnce({ id: 'new-request-uuid' } as any); // eslint-disable-line @typescript-eslint/no-unsafe-argument
+        .mockResolvedValueOnce({ id: 'new-request-uuid' } as any);
 
       requestRepository.create.mockReturnValue({
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         order: { id: 'order-uuid' } as any,
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+
         partner: mockAvailablePartner as any,
-        expiresAt: expect.any(Date), // eslint-disable-line @typescript-eslint/no-unsafe-assignment
+        expiresAt: expect.any(Date),
         status: RequestStatus.PENDING,
       } as any);
 
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
       requestRepository.save.mockResolvedValue({
         id: 'new-request-uuid',
       } as any);
@@ -663,16 +656,15 @@ describe('DeliveryPartnerService - Comprehensive', () => {
         0,
       );
 
-      // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(requestRepository.create).toHaveBeenCalledWith(
         expect.objectContaining({
           order: { id: 'order-uuid' },
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+
           partner: expect.objectContaining({ id: 'partner-uuid' }),
           status: RequestStatus.PENDING,
         }),
       );
-      // eslint-disable-next-line @typescript-eslint/unbound-method
+
       expect(requestRepository.save).toHaveBeenCalled();
       expect(result).toEqual({ id: 'new-request-uuid' });
     });
@@ -696,19 +688,17 @@ describe('DeliveryPartnerService - Comprehensive', () => {
 
       await service.handleExpiredRequests();
 
-      // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(requestRepository.find).toHaveBeenCalledWith(
         expect.objectContaining({
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
           where: expect.objectContaining({
             status: RequestStatus.PENDING,
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+
             expiresAt: expect.any(Object),
           }),
           relations: ['order'],
         }),
       );
-      // eslint-disable-next-line @typescript-eslint/unbound-method
+
       expect(requestRepository.save).toHaveBeenCalledWith(
         expect.objectContaining({
           id: 'expired-request-uuid',
@@ -744,7 +734,6 @@ describe('DeliveryPartnerService - Comprehensive', () => {
 
       await service.handleExpiredRequests();
 
-      // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(requestRepository.find).toHaveBeenCalled();
     });
   });

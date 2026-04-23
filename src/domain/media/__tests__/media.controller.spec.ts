@@ -30,7 +30,11 @@ describe('MediaController - Comprehensive', () => {
     updatePublic: jest.fn().mockResolvedValue(mockMedia),
     removePublic: jest.fn().mockResolvedValue(undefined),
     getStatsPublic: jest.fn().mockResolvedValue({ totalFiles: 1 }),
-    getDownloadUrl: jest.fn().mockResolvedValue('https://cloudinary.com/media/images/1234567890-test.png'),
+    getDownloadUrl: jest
+      .fn()
+      .mockResolvedValue(
+        'https://cloudinary.com/media/images/1234567890-test.png',
+      ),
   };
 
   beforeEach(async () => {
@@ -56,19 +60,29 @@ describe('MediaController - Comprehensive', () => {
   describe('uploadFiles - File Upload Endpoint', () => {
     it('should upload files successfully', async () => {
       const mockFiles = [
-        { originalname: 'test.png', mimetype: 'image/png', size: 1024, buffer: Buffer.from('test') },
+        {
+          originalname: 'test.png',
+          mimetype: 'image/png',
+          size: 1024,
+          buffer: Buffer.from('test'),
+        },
       ] as Express.Multer.File[];
       const uploadDto = { pathKey: 'MEDIA_IMAGE' as any };
 
       const result = await controller.uploadFiles(mockFiles, uploadDto);
 
-      expect(service.uploadFilesPublic).toHaveBeenCalledWith(mockFiles, uploadDto);
+      expect(service.uploadFilesPublic).toHaveBeenCalledWith(
+        mockFiles,
+        uploadDto,
+      );
       expect(result.message).toBe('Files uploaded successfully');
       expect(result.count).toBe(1);
     });
 
     it('should throw BadRequestException when no files provided', async () => {
-      mockMediaService.uploadFilesPublic.mockRejectedValue(new Error('At least one file must be provided'));
+      mockMediaService.uploadFilesPublic.mockRejectedValue(
+        new Error('At least one file must be provided'),
+      );
       const mockFiles: Express.Multer.File[] = [];
 
       await expect(controller.uploadFiles(mockFiles)).rejects.toThrow();
@@ -79,7 +93,7 @@ describe('MediaController - Comprehensive', () => {
     it('should return paginated media list', async () => {
       const query = { page: 1, limit: 20 };
 
-      const result = await controller.findAll(query as any);
+      const result = await controller.findAll(query);
 
       expect(service.findAllPublic).toHaveBeenCalledWith(query);
       expect(result.data).toHaveLength(1);
@@ -88,7 +102,7 @@ describe('MediaController - Comprehensive', () => {
     it('should pass search parameter', async () => {
       const query = { page: 1, limit: 20, search: 'test' };
 
-      await controller.findAll(query as any);
+      await controller.findAll(query);
 
       expect(service.findAllPublic).toHaveBeenCalledWith(query);
     });
@@ -109,7 +123,10 @@ describe('MediaController - Comprehensive', () => {
 
       const result = await controller.update('media-uuid', updateDto);
 
-      expect(service.updatePublic).toHaveBeenCalledWith('media-uuid', updateDto);
+      expect(service.updatePublic).toHaveBeenCalledWith(
+        'media-uuid',
+        updateDto,
+      );
       expect(result).toEqual(mockMedia);
     });
   });
@@ -137,7 +154,9 @@ describe('MediaController - Comprehensive', () => {
       const result = await controller.getDownloadUrl('media-uuid');
 
       expect(service.getDownloadUrl).toHaveBeenCalledWith('media-uuid');
-      expect(result.downloadUrl).toBe('https://cloudinary.com/media/images/1234567890-test.png');
+      expect(result.downloadUrl).toBe(
+        'https://cloudinary.com/media/images/1234567890-test.png',
+      );
     });
   });
 });

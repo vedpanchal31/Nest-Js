@@ -1,4 +1,9 @@
-import { MigrationInterface, QueryRunner, TableColumn, TableIndex } from 'typeorm';
+import {
+  MigrationInterface,
+  QueryRunner,
+  TableColumn,
+  TableIndex,
+} from 'typeorm';
 
 export class RemoveStatusColumnFromProducts1774431438473 implements MigrationInterface {
   name = 'RemoveStatusColumnFromProducts1774431438473';

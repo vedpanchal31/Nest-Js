@@ -23,5 +23,6 @@ import { BulkUploadModule } from 'src/core/bulk-upload/bulk-upload.module';
   ],
   controllers: [ProductsController],
   providers: [ProductsService],
+  exports: [ProductsService],
 })
-export class ProductsModule { }
+export class ProductsModule {}

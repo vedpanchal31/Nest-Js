@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ValidationPipe, CanActivate } from '@nestjs/common';
 import request from 'supertest';
@@ -30,10 +29,18 @@ describe('DeliveryPartnerController (e2e)', () => {
 
   const mockDeliveryPartnerService = {
     register: jest.fn().mockResolvedValue(mockPartner),
-    updateLocation: jest.fn().mockResolvedValue({ id: 'status-uuid', currentLat: 40.7128, currentLng: -74.006 }),
-    toggleOnlineStatus: jest.fn().mockResolvedValue({ id: 'status-uuid', isOnline: true }),
+    updateLocation: jest.fn().mockResolvedValue({
+      id: 'status-uuid',
+      currentLat: 40.7128,
+      currentLng: -74.006,
+    }),
+    toggleOnlineStatus: jest
+      .fn()
+      .mockResolvedValue({ id: 'status-uuid', isOnline: true }),
     getMyDashboard: jest.fn().mockResolvedValue(mockDashboard),
-    acceptRequest: jest.fn().mockResolvedValue({ id: 'request-uuid', status: 2 }),
+    acceptRequest: jest
+      .fn()
+      .mockResolvedValue({ id: 'request-uuid', status: 2 }),
     rejectRequest: jest.fn().mockResolvedValue({ message: 'Request rejected' }),
     listAllPartners: jest.fn().mockResolvedValue({
       data: [mockPartner],
@@ -42,7 +49,9 @@ describe('DeliveryPartnerController (e2e)', () => {
       limit: 10,
       totalPages: 1,
     }),
-    toggleVerification: jest.fn().mockResolvedValue({ ...mockPartner, isVerified: false }),
+    toggleVerification: jest
+      .fn()
+      .mockResolvedValue({ ...mockPartner, isVerified: false }),
     deletePartner: jest.fn().mockResolvedValue(mockPartner),
   };
 
@@ -65,7 +74,10 @@ describe('DeliveryPartnerController (e2e)', () => {
 
   beforeEach(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
-      controllers: [DeliveryPartnerController, DeliveryPartnerManagementController],
+      controllers: [
+        DeliveryPartnerController,
+        DeliveryPartnerManagementController,
+      ],
       providers: [
         {
           provide: DeliveryPartnerService,
@@ -80,7 +92,9 @@ describe('DeliveryPartnerController (e2e)', () => {
       .compile();
 
     app = moduleFixture.createNestApplication();
-    app.useGlobalPipes(new ValidationPipe({ transform: true, whitelist: true }));
+    app.useGlobalPipes(
+      new ValidationPipe({ transform: true, whitelist: true }),
+    );
     await app.init();
   });
 
@@ -245,7 +259,10 @@ describe('DeliveryPartnerController (e2e)', () => {
         .set('Authorization', 'Bearer mock-jwt-token')
         .expect(200);
 
-      expect(mockDeliveryPartnerService.acceptRequest).toHaveBeenCalledWith(customId, 'user-uuid');
+      expect(mockDeliveryPartnerService.acceptRequest).toHaveBeenCalledWith(
+        customId,
+        'user-uuid',
+      );
     });
   });
 

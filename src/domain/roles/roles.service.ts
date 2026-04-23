@@ -23,8 +23,7 @@ export class RolesService {
     private readonly permissionsRepository: Repository<Permission>,
     @InjectRepository(User)
     private readonly usersRepository: Repository<User>,
-  ) { }
-
+  ) {}
 
   // 1
   async getAllRoles() {

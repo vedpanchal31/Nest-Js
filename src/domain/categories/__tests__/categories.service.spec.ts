@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { CategoriesService } from '../categories.service';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Category } from '../entities/category.entity';
-import { Repository } from 'typeorm';
+import { Repository, SelectQueryBuilder } from 'typeorm';
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { CloudinaryService } from '../../../core/cloudinary/cloudinary.service';
 
@@ -43,6 +43,19 @@ describe('CategoriesService - Comprehensive', () => {
     }),
   };
 
+  const createMockQueryBuilder = (
+    overrides: Record<string, unknown> = {},
+  ): SelectQueryBuilder<Category> =>
+    ({
+      leftJoinAndSelect: jest.fn().mockReturnThis(),
+      orderBy: jest.fn().mockReturnThis(),
+      skip: jest.fn().mockReturnThis(),
+      take: jest.fn().mockReturnThis(),
+      andWhere: jest.fn().mockReturnThis(),
+      getManyAndCount: jest.fn().mockResolvedValue([[mockCategory], 1]),
+      ...overrides,
+    }) as unknown as SelectQueryBuilder<Category>;
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -81,14 +94,10 @@ describe('CategoriesService - Comprehensive', () => {
     });
 
     it('should calculate correct skip value for page 2', async () => {
-      const mockQueryBuilder = {
-        leftJoinAndSelect: jest.fn().mockReturnThis(),
-        orderBy: jest.fn().mockReturnThis(),
-        skip: jest.fn().mockReturnThis(),
-        take: jest.fn().mockReturnThis(),
-        getManyAndCount: jest.fn().mockResolvedValue([[mockCategory], 1]),
-      };
-      categoriesRepository.createQueryBuilder.mockReturnValue(mockQueryBuilder as any);
+      const mockQueryBuilder = createMockQueryBuilder({
+        andWhere: undefined,
+      });
+      categoriesRepository.createQueryBuilder.mockReturnValue(mockQueryBuilder);
 
       await service.getAllCategories(2, 10);
 
@@ -97,15 +106,8 @@ describe('CategoriesService - Comprehensive', () => {
     });
 
     it('should apply search filter when provided', async () => {
-      const mockQueryBuilder = {
-        leftJoinAndSelect: jest.fn().mockReturnThis(),
-        orderBy: jest.fn().mockReturnThis(),
-        skip: jest.fn().mockReturnThis(),
-        take: jest.fn().mockReturnThis(),
-        andWhere: jest.fn().mockReturnThis(),
-        getManyAndCount: jest.fn().mockResolvedValue([[mockCategory], 1]),
-      };
-      categoriesRepository.createQueryBuilder.mockReturnValue(mockQueryBuilder as any);
+      const mockQueryBuilder = createMockQueryBuilder();
+      categoriesRepository.createQueryBuilder.mockReturnValue(mockQueryBuilder);
 
       await service.getAllCategories(1, 10, 'Electronics');
 
@@ -116,15 +118,8 @@ describe('CategoriesService - Comprehensive', () => {
     });
 
     it('should not apply search filter when not provided', async () => {
-      const mockQueryBuilder = {
-        leftJoinAndSelect: jest.fn().mockReturnThis(),
-        orderBy: jest.fn().mockReturnThis(),
-        skip: jest.fn().mockReturnThis(),
-        take: jest.fn().mockReturnThis(),
-        andWhere: jest.fn().mockReturnThis(),
-        getManyAndCount: jest.fn().mockResolvedValue([[mockCategory], 1]),
-      };
-      categoriesRepository.createQueryBuilder.mockReturnValue(mockQueryBuilder as any);
+      const mockQueryBuilder = createMockQueryBuilder();
+      categoriesRepository.createQueryBuilder.mockReturnValue(mockQueryBuilder);
 
       await service.getAllCategories(1, 10);
 
@@ -148,14 +143,15 @@ describe('CategoriesService - Comprehensive', () => {
     it('should throw NotFoundException when category not found', async () => {
       categoriesRepository.findOne.mockResolvedValue(null);
 
-      await expect(service.getAllCategoriesById('non-existent-id')).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(
+        service.getAllCategoriesById('non-existent-id'),
+      ).rejects.toThrow(NotFoundException);
     });
   });
 
   describe('createCategory - Business Logic Validation', () => {
     const mockImageFile = { originalname: 'test.jpg' } as Express.Multer.File;
+    const mockImageFiles = [mockImageFile];
 
     it('should throw BadRequestException when category name already exists', async () => {
       categoriesRepository.findOne.mockResolvedValue(mockCategory);
@@ -165,7 +161,7 @@ describe('CategoriesService - Comprehensive', () => {
         description: 'Test description',
       };
 
-      await expect(service.createCategory(dto, mockImageFile)).rejects.toThrow(
+      await expect(service.createCategory(dto, mockImageFiles)).rejects.toThrow(
         BadRequestException,
       );
     });
@@ -193,7 +189,7 @@ describe('CategoriesService - Comprehensive', () => {
         description: 'New description',
       };
 
-      await service.createCategory(dto, mockImageFile);
+      await service.createCategory(dto, mockImageFiles);
 
       expect(cloudinaryService.uploadImage).toHaveBeenCalledWith(
         mockImageFile,
@@ -203,9 +199,15 @@ describe('CategoriesService - Comprehensive', () => {
 
     it('should save category with image URL when image uploaded', async () => {
       categoriesRepository.findOne.mockResolvedValue(null);
-      const createSpy = jest.fn().mockReturnValue({ ...mockCategory, name: 'New Category' });
+      const createSpy = jest
+        .fn()
+        .mockReturnValue({ ...mockCategory, name: 'New Category' });
       categoriesRepository.create = createSpy;
-      const saveSpy = jest.fn().mockResolvedValue({ ...mockCategory, name: 'New Category', image: 'http://cloudinary.com/image.jpg' });
+      const saveSpy = jest.fn().mockResolvedValue({
+        ...mockCategory,
+        name: 'New Category',
+        image: 'http://cloudinary.com/image.jpg',
+      });
       categoriesRepository.save = saveSpy;
 
       const dto = {
@@ -213,7 +215,7 @@ describe('CategoriesService - Comprehensive', () => {
         description: 'New description',
       };
 
-      await service.createCategory(dto, mockImageFile);
+      await service.createCategory(dto, mockImageFiles);
 
       expect(createSpy).toHaveBeenCalledWith(
         expect.objectContaining({

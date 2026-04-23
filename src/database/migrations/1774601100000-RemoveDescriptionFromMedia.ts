@@ -1,8 +1,6 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class RemoveDescriptionFromMedia1774601100000
-  implements MigrationInterface
-{
+export class RemoveDescriptionFromMedia1774601100000 implements MigrationInterface {
   name = 'RemoveDescriptionFromMedia1774601100000';
 
   public async up(queryRunner: QueryRunner): Promise<void> {

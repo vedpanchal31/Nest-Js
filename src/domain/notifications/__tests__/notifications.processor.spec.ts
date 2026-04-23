@@ -43,8 +43,12 @@ describe('NotificationsProcessor - Comprehensive', () => {
     notificationsService = module.get(NotificationsService);
 
     // Setup logger spies
-    loggerLogSpy = jest.spyOn(Logger.prototype, 'log').mockImplementation(() => { });
-    loggerErrorSpy = jest.spyOn(Logger.prototype, 'error').mockImplementation(() => { });
+    loggerLogSpy = jest
+      .spyOn(Logger.prototype, 'log')
+      .mockImplementation(() => {});
+    loggerErrorSpy = jest
+      .spyOn(Logger.prototype, 'error')
+      .mockImplementation(() => {});
 
     jest.clearAllMocks();
   });
@@ -92,7 +96,9 @@ describe('NotificationsProcessor - Comprehensive', () => {
       await processor.handleSendNotification(job);
 
       expect(loggerLogSpy).toHaveBeenCalledWith(
-        expect.stringContaining('Notification sent for event "payment.success"'),
+        expect.stringContaining(
+          'Notification sent for event "payment.success"',
+        ),
       );
     });
 
@@ -108,7 +114,9 @@ describe('NotificationsProcessor - Comprehensive', () => {
       const error = new Error('Database error');
       notificationsService.create.mockRejectedValueOnce(error);
 
-      await expect(processor.handleSendNotification(job)).rejects.toThrow('Database error');
+      await expect(processor.handleSendNotification(job)).rejects.toThrow(
+        'Database error',
+      );
 
       expect(loggerErrorSpy).toHaveBeenCalledWith(
         expect.stringContaining('Failed to send notification'),
@@ -147,7 +155,9 @@ describe('NotificationsProcessor - Comprehensive', () => {
       await processor.handleWelcomeNotification(job);
 
       expect(loggerLogSpy).toHaveBeenCalledWith(
-        expect.stringContaining('Welcome notification sent to user new-user-uuid'),
+        expect.stringContaining(
+          'Welcome notification sent to user new-user-uuid',
+        ),
       );
     });
 
@@ -160,7 +170,9 @@ describe('NotificationsProcessor - Comprehensive', () => {
       const error = new Error('Service unavailable');
       notificationsService.create.mockRejectedValueOnce(error);
 
-      await expect(processor.handleWelcomeNotification(job)).rejects.toThrow('Service unavailable');
+      await expect(processor.handleWelcomeNotification(job)).rejects.toThrow(
+        'Service unavailable',
+      );
 
       expect(loggerErrorSpy).toHaveBeenCalledWith(
         expect.stringContaining('Failed to send welcome notification'),

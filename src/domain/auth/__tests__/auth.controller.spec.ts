@@ -190,7 +190,8 @@ describe('AuthController', () => {
 
     it('should reset password successfully', async () => {
       const mockResponse = {
-        message: 'Password reset successfully. You can now login with your new password.',
+        message:
+          'Password reset successfully. You can now login with your new password.',
       };
       service.resetPassword.mockResolvedValue(mockResponse);
 

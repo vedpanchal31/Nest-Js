@@ -123,7 +123,11 @@ describe('RolesService - Comprehensive', () => {
     it('should create role successfully', async () => {
       rolesRepository.findOne.mockResolvedValue(null);
 
-      const dto = { name: 'New Role', description: 'New role description', type: 1 };
+      const dto = {
+        name: 'New Role',
+        description: 'New role description',
+        type: 1,
+      };
       const result = await service.createRole(dto);
 
       expect(rolesRepository.create).toHaveBeenCalledWith({
@@ -147,18 +151,25 @@ describe('RolesService - Comprehensive', () => {
     it('should set createdBy when userId provided', async () => {
       rolesRepository.findOne.mockResolvedValue(null);
 
-      const dto = { name: 'New Role', description: 'Description', type: 1, userId: 'creator-uuid' };
+      const dto = {
+        name: 'New Role',
+        description: 'Description',
+        type: 1,
+        userId: 'creator-uuid',
+      };
       const saveSpy = jest.fn().mockResolvedValue(mockRole);
       rolesRepository.save = saveSpy;
 
       await service.createRole(dto);
 
       // Check that the role was created with correct data and then save was called
-      expect(rolesRepository.create).toHaveBeenCalledWith(expect.objectContaining({
-        name: dto.name,
-        description: dto.description,
-        type: dto.type,
-      }));
+      expect(rolesRepository.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          name: dto.name,
+          description: dto.description,
+          type: dto.type,
+        }),
+      );
       // The createdBy is set after create() but before save()
       expect(saveSpy).toHaveBeenCalled();
     });
@@ -167,30 +178,40 @@ describe('RolesService - Comprehensive', () => {
   describe('updateRole - Role Update', () => {
     it('should update role name', async () => {
       rolesRepository.findOne.mockResolvedValue(mockRole);
-      const saveSpy = jest.fn().mockResolvedValue({ ...mockRole, name: 'Updated Name' });
+      const saveSpy = jest
+        .fn()
+        .mockResolvedValue({ ...mockRole, name: 'Updated Name' });
       rolesRepository.save = saveSpy;
 
-      const result = await service.updateRole('role-uuid', { name: 'Updated Name' });
+      const result = await service.updateRole('role-uuid', {
+        name: 'Updated Name',
+      });
 
-      expect(saveSpy).toHaveBeenCalledWith(expect.objectContaining({ name: 'Updated Name' }));
+      expect(saveSpy).toHaveBeenCalledWith(
+        expect.objectContaining({ name: 'Updated Name' }),
+      );
     });
 
     it('should update role description', async () => {
       rolesRepository.findOne.mockResolvedValue(mockRole);
-      const saveSpy = jest.fn().mockResolvedValue({ ...mockRole, description: 'Updated Desc' });
+      const saveSpy = jest
+        .fn()
+        .mockResolvedValue({ ...mockRole, description: 'Updated Desc' });
       rolesRepository.save = saveSpy;
 
       await service.updateRole('role-uuid', { description: 'Updated Desc' });
 
-      expect(saveSpy).toHaveBeenCalledWith(expect.objectContaining({ description: 'Updated Desc' }));
+      expect(saveSpy).toHaveBeenCalledWith(
+        expect.objectContaining({ description: 'Updated Desc' }),
+      );
     });
 
     it('should throw NotFoundException when role not found', async () => {
       rolesRepository.findOne.mockResolvedValue(null);
 
-      await expect(service.updateRole('non-existent', { name: 'New Name' })).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(
+        service.updateRole('non-existent', { name: 'New Name' }),
+      ).rejects.toThrow(NotFoundException);
     });
   });
 
@@ -214,7 +235,10 @@ describe('RolesService - Comprehensive', () => {
 
   describe('getPermissionsByRoleId - Permission Retrieval', () => {
     it('should return permissions for role', async () => {
-      const roleWithPermissions = { ...mockRole, permissions: [mockPermission] };
+      const roleWithPermissions = {
+        ...mockRole,
+        permissions: [mockPermission],
+      };
       rolesRepository.findOne.mockResolvedValue(roleWithPermissions);
 
       const result = await service.getPermissionsByRoleId('role-uuid');
@@ -225,9 +249,9 @@ describe('RolesService - Comprehensive', () => {
     it('should throw NotFoundException when role not found', async () => {
       rolesRepository.findOne.mockResolvedValue(null);
 
-      await expect(service.getPermissionsByRoleId('non-existent')).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(
+        service.getPermissionsByRoleId('non-existent'),
+      ).rejects.toThrow(NotFoundException);
     });
   });
 
@@ -236,7 +260,12 @@ describe('RolesService - Comprehensive', () => {
       rolesRepository.findOne.mockResolvedValue(mockRole);
       permissionsRepository.findOne.mockResolvedValue(mockPermission);
 
-      const dto = { permissions: [PermissionType.CREATE_CATEGORY, PermissionType.UPDATE_CATEGORY] };
+      const dto = {
+        permissions: [
+          PermissionType.CREATE_CATEGORY,
+          PermissionType.UPDATE_CATEGORY,
+        ],
+      };
       await service.updateRolePermissions('role-uuid', dto);
 
       expect(rolesRepository.save).toHaveBeenCalled();
@@ -249,7 +278,9 @@ describe('RolesService - Comprehensive', () => {
       const dto = { permissions: [PermissionType.CREATE_CATEGORY] };
       await service.updateRolePermissions('role-uuid', dto);
 
-      expect(permissionsRepository.create).toHaveBeenCalledWith({ name: PermissionType.CREATE_CATEGORY });
+      expect(permissionsRepository.create).toHaveBeenCalledWith({
+        name: PermissionType.CREATE_CATEGORY,
+      });
       expect(permissionsRepository.save).toHaveBeenCalled();
     });
   });
@@ -282,9 +313,11 @@ describe('RolesService - Comprehensive', () => {
       const dto = { userId: 'user-uuid', roleId: 'role-uuid' };
       await service.assignRoleToUser(dto);
 
-      expect(usersRepository.save).toHaveBeenCalledWith(expect.objectContaining({
-        roles: [mockRole],
-      }));
+      expect(usersRepository.save).toHaveBeenCalledWith(
+        expect.objectContaining({
+          roles: [mockRole],
+        }),
+      );
     });
 
     it('should throw NotFoundException when user not found', async () => {
@@ -302,7 +335,10 @@ describe('RolesService - Comprehensive', () => {
       const roleWithPermission = { ...mockRole, permissions: [mockPermission] };
       rolesRepository.findOne.mockResolvedValue(roleWithPermission);
 
-      const result = await service.hasAccess('role-uuid', PermissionType.CREATE_CATEGORY);
+      const result = await service.hasAccess(
+        'role-uuid',
+        PermissionType.CREATE_CATEGORY,
+      );
 
       expect(result).toBe(true);
     });
@@ -310,7 +346,10 @@ describe('RolesService - Comprehensive', () => {
     it('should return false when role does not have permission', async () => {
       rolesRepository.findOne.mockResolvedValue(mockRole);
 
-      const result = await service.hasAccess('role-uuid', PermissionType.DELETE_CATEGORY);
+      const result = await service.hasAccess(
+        'role-uuid',
+        PermissionType.DELETE_CATEGORY,
+      );
 
       expect(result).toBe(false);
     });
@@ -318,7 +357,10 @@ describe('RolesService - Comprehensive', () => {
     it('should return false when role not found', async () => {
       rolesRepository.findOne.mockResolvedValue(null);
 
-      const result = await service.hasAccess('non-existent', PermissionType.CREATE_CATEGORY);
+      const result = await service.hasAccess(
+        'non-existent',
+        PermissionType.CREATE_CATEGORY,
+      );
 
       expect(result).toBe(false);
     });

@@ -2,7 +2,11 @@ import { validate } from 'class-validator';
 import { plainToInstance } from 'class-transformer';
 import { CreateNotificationDto } from '../dtos/create-notification.dto';
 import { UpdateNotificationDto } from '../dtos/update-notification.dto';
-import { NotificationQueryDto, NotificationActionDto, NotificationPayloadType } from '../dtos/notification-query.dto';
+import {
+  NotificationQueryDto,
+  NotificationActionDto,
+  NotificationPayloadType,
+} from '../dtos/notification-query.dto';
 import { NotificationType } from '../entities/notification.entity';
 
 describe('Notification DTOs - Validation', () => {
@@ -54,7 +58,7 @@ describe('Notification DTOs - Validation', () => {
 
       const errors = await validate(dto);
       expect(errors.length).toBeGreaterThan(0);
-      expect(errors.some(e => e.property === 'type')).toBe(true);
+      expect(errors.some((e) => e.property === 'type')).toBe(true);
     });
 
     it('should fail validation when type is invalid', async () => {
@@ -78,7 +82,7 @@ describe('Notification DTOs - Validation', () => {
 
       const errors = await validate(dto);
       expect(errors.length).toBeGreaterThan(0);
-      expect(errors.some(e => e.property === 'title')).toBe(true);
+      expect(errors.some((e) => e.property === 'title')).toBe(true);
     });
 
     it('should fail validation when title is not a string', async () => {
@@ -102,7 +106,7 @@ describe('Notification DTOs - Validation', () => {
 
       const errors = await validate(dto);
       expect(errors.length).toBeGreaterThan(0);
-      expect(errors.some(e => e.property === 'message')).toBe(true);
+      expect(errors.some((e) => e.property === 'message')).toBe(true);
     });
 
     it('should pass validation when actionUrl is missing (optional)', async () => {
@@ -188,14 +192,18 @@ describe('Notification DTOs - Validation', () => {
     });
 
     it('should validate search string', async () => {
-      const dto = plainToInstance(NotificationQueryDto, { search: 'test query' });
+      const dto = plainToInstance(NotificationQueryDto, {
+        search: 'test query',
+      });
 
       const errors = await validate(dto);
       expect(errors).toHaveLength(0);
     });
 
     it('should validate valid type enum', async () => {
-      const dto = plainToInstance(NotificationQueryDto, { type: NotificationType.PAYMENT });
+      const dto = plainToInstance(NotificationQueryDto, {
+        type: NotificationType.PAYMENT,
+      });
 
       const errors = await validate(dto);
       expect(errors).toHaveLength(0);
@@ -218,7 +226,9 @@ describe('Notification DTOs - Validation', () => {
     });
 
     it('should fail with invalid userId', async () => {
-      const dto = plainToInstance(NotificationQueryDto, { userId: 'not-a-uuid' });
+      const dto = plainToInstance(NotificationQueryDto, {
+        userId: 'not-a-uuid',
+      });
 
       const errors = await validate(dto);
       expect(errors.length).toBeGreaterThan(0);
@@ -260,7 +270,9 @@ describe('Notification DTOs - Validation', () => {
     });
 
     it('should fail with invalid date format', async () => {
-      const dto = plainToInstance(NotificationQueryDto, { fromDate: 'invalid-date' });
+      const dto = plainToInstance(NotificationQueryDto, {
+        fromDate: 'invalid-date',
+      });
 
       const errors = await validate(dto);
       expect(errors.length).toBeGreaterThan(0);

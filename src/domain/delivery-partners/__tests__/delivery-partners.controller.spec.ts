@@ -37,10 +37,18 @@ describe('DeliveryPartnerController - Comprehensive', () => {
 
   const mockPartnerService = {
     register: jest.fn().mockResolvedValue(mockPartner),
-    updateLocation: jest.fn().mockResolvedValue({ id: 'status-uuid', currentLat: 40.7128, currentLng: -74.006 }),
-    toggleOnlineStatus: jest.fn().mockResolvedValue({ id: 'status-uuid', isOnline: true }),
+    updateLocation: jest.fn().mockResolvedValue({
+      id: 'status-uuid',
+      currentLat: 40.7128,
+      currentLng: -74.006,
+    }),
+    toggleOnlineStatus: jest
+      .fn()
+      .mockResolvedValue({ id: 'status-uuid', isOnline: true }),
     getMyDashboard: jest.fn().mockResolvedValue(mockDashboard),
-    acceptRequest: jest.fn().mockResolvedValue({ id: 'request-uuid', status: 2 }),
+    acceptRequest: jest
+      .fn()
+      .mockResolvedValue({ id: 'request-uuid', status: 2 }),
     rejectRequest: jest.fn().mockResolvedValue({ message: 'Request rejected' }),
   };
 
@@ -55,7 +63,9 @@ describe('DeliveryPartnerController - Comprehensive', () => {
       ],
     }).compile();
 
-    controller = module.get<DeliveryPartnerController>(DeliveryPartnerController);
+    controller = module.get<DeliveryPartnerController>(
+      DeliveryPartnerController,
+    );
     service = module.get(DeliveryPartnerService);
     jest.clearAllMocks();
   });
@@ -108,17 +118,31 @@ describe('DeliveryPartnerController - Comprehensive', () => {
     it('should update location with lat and lng', async () => {
       const dto = { lat: 40.7128, lng: -74.006 };
 
-      const result = await controller.updateLocation({ user: mockUserToken } as any, dto);
+      const result = await controller.updateLocation(
+        { user: mockUserToken },
+        dto,
+      );
 
-      expect(service.updateLocation).toHaveBeenCalledWith('user-uuid', 40.7128, -74.006);
+      expect(service.updateLocation).toHaveBeenCalledWith(
+        'user-uuid',
+        40.7128,
+        -74.006,
+      );
     });
 
     it('should pass user id from token', async () => {
       const dto = { lat: 41.0, lng: -75.0 };
 
-      await controller.updateLocation({ user: { id: 'different-user' } } as any, dto);
+      await controller.updateLocation(
+        { user: { id: 'different-user' } } as any,
+        dto,
+      );
 
-      expect(service.updateLocation).toHaveBeenCalledWith('different-user', 41.0, -75.0);
+      expect(service.updateLocation).toHaveBeenCalledWith(
+        'different-user',
+        41.0,
+        -75.0,
+      );
     });
   });
 
@@ -126,23 +150,34 @@ describe('DeliveryPartnerController - Comprehensive', () => {
     it('should toggle online status to true', async () => {
       const dto = { isOnline: true };
 
-      const result = await controller.toggleStatus({ user: mockUserToken } as any, dto);
+      const result = await controller.toggleStatus(
+        { user: mockUserToken },
+        dto,
+      );
 
-      expect(service.toggleOnlineStatus).toHaveBeenCalledWith('user-uuid', true);
+      expect(service.toggleOnlineStatus).toHaveBeenCalledWith(
+        'user-uuid',
+        true,
+      );
     });
 
     it('should toggle online status to false', async () => {
       const dto = { isOnline: false };
 
-      await controller.toggleStatus({ user: mockUserToken } as any, dto);
+      await controller.toggleStatus({ user: mockUserToken }, dto);
 
-      expect(service.toggleOnlineStatus).toHaveBeenCalledWith('user-uuid', false);
+      expect(service.toggleOnlineStatus).toHaveBeenCalledWith(
+        'user-uuid',
+        false,
+      );
     });
   });
 
   describe('getDashboard - Dashboard Data', () => {
     it('should return dashboard for authenticated partner', async () => {
-      const result = await controller.getDashboard({ user: mockUserToken } as any);
+      const result = await controller.getDashboard({
+        user: mockUserToken,
+      });
 
       expect(result).toEqual(mockDashboard);
       expect(service.getMyDashboard).toHaveBeenCalledWith('user-uuid');
@@ -159,15 +194,21 @@ describe('DeliveryPartnerController - Comprehensive', () => {
     it('should accept request with id', async () => {
       const requestId = 'request-uuid';
 
-      const result = await controller.acceptRequest({ user: mockUserToken } as any, requestId);
+      const result = await controller.acceptRequest(
+        { user: mockUserToken },
+        requestId,
+      );
 
-      expect(service.acceptRequest).toHaveBeenCalledWith(requestId, 'user-uuid');
+      expect(service.acceptRequest).toHaveBeenCalledWith(
+        requestId,
+        'user-uuid',
+      );
     });
 
     it('should handle any request id format', async () => {
       const customId = 'custom-request-id';
 
-      await controller.acceptRequest({ user: mockUserToken } as any, customId);
+      await controller.acceptRequest({ user: mockUserToken }, customId);
 
       expect(service.acceptRequest).toHaveBeenCalledWith(customId, 'user-uuid');
     });
@@ -177,9 +218,15 @@ describe('DeliveryPartnerController - Comprehensive', () => {
     it('should reject request with id', async () => {
       const requestId = 'request-uuid';
 
-      const result = await controller.rejectRequest({ user: mockUserToken } as any, requestId);
+      const result = await controller.rejectRequest(
+        { user: mockUserToken },
+        requestId,
+      );
 
-      expect(service.rejectRequest).toHaveBeenCalledWith(requestId, 'user-uuid');
+      expect(service.rejectRequest).toHaveBeenCalledWith(
+        requestId,
+        'user-uuid',
+      );
       expect(result).toEqual({ message: 'Request rejected' });
     });
   });

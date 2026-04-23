@@ -90,7 +90,12 @@ describe('UsersController', () => {
 
       const result = await controller.getUsers(1, 10, undefined, undefined);
 
-      expect(service.getAllUsers).toHaveBeenCalledWith(1, 10, undefined, undefined);
+      expect(service.getAllUsers).toHaveBeenCalledWith(
+        1,
+        10,
+        undefined,
+        undefined,
+      );
       expect(result).toEqual(mockResponse);
     });
 
@@ -105,13 +110,18 @@ describe('UsersController', () => {
 
       await controller.getUsers(1, 10, 'test', UserType.ADMIN);
 
-      expect(service.getAllUsers).toHaveBeenCalledWith(1, 10, 'test', UserType.ADMIN);
+      expect(service.getAllUsers).toHaveBeenCalledWith(
+        1,
+        10,
+        'test',
+        UserType.ADMIN,
+      );
     });
   });
 
   describe('getProfile', () => {
     it('should return user profile for authenticated user', async () => {
-      service.findOne.mockResolvedValue(mockUser as any);
+      service.findOne.mockResolvedValue(mockUser);
       const mockRequest = { user: mockTokenPayload } as any;
 
       const result = await controller.getProfile(mockRequest);
@@ -121,13 +131,13 @@ describe('UsersController', () => {
     });
 
     it('should include profile data in response', async () => {
-      service.findOne.mockResolvedValue(mockUser as any);
+      service.findOne.mockResolvedValue(mockUser);
       const mockRequest = { user: mockTokenPayload } as any;
 
       const result = await controller.getProfile(mockRequest);
 
       expect(result.profile).toBeDefined();
-      expect(result.profile!.name).toBe('Test User');
+      expect(result.profile.name).toBe('Test User');
     });
   });
 
@@ -149,20 +159,26 @@ describe('UsersController', () => {
           ...updateProfileDto,
         },
       };
-      service.updateProfile.mockResolvedValue(updatedUser as any);
+      service.updateProfile.mockResolvedValue(updatedUser);
       const mockRequest = { user: mockTokenPayload } as any;
 
-      const result = await controller.updateProfile(mockRequest, updateProfileDto as any);
+      const result = await controller.updateProfile(
+        mockRequest,
+        updateProfileDto,
+      );
 
-      expect(service.updateProfile).toHaveBeenCalledWith(mockTokenPayload.id, updateProfileDto);
+      expect(service.updateProfile).toHaveBeenCalledWith(
+        mockTokenPayload.id,
+        updateProfileDto,
+      );
       expect(result.name).toBe(updateProfileDto.name);
     });
 
     it('should pass correct user id from token', async () => {
-      service.updateProfile.mockResolvedValue(mockUser as any);
+      service.updateProfile.mockResolvedValue(mockUser);
       const mockRequest = { user: mockTokenPayload } as any;
 
-      await controller.updateProfile(mockRequest, updateProfileDto as any);
+      await controller.updateProfile(mockRequest, updateProfileDto);
 
       expect(service.updateProfile).toHaveBeenCalledWith(
         '550e8400-e29b-41d4-a716-446655440000',
@@ -173,7 +189,7 @@ describe('UsersController', () => {
 
   describe('remove', () => {
     it('should soft delete user account', async () => {
-      service.removeUser.mockResolvedValue(mockUser as any);
+      service.removeUser.mockResolvedValue(mockUser);
       const mockRequest = { user: mockTokenPayload } as any;
 
       const result = await controller.remove(mockRequest);
@@ -183,12 +199,14 @@ describe('UsersController', () => {
     });
 
     it('should call removeUser with correct id from token', async () => {
-      service.removeUser.mockResolvedValue(mockUser as any);
+      service.removeUser.mockResolvedValue(mockUser);
       const mockRequest = { user: mockTokenPayload } as any;
 
       await controller.remove(mockRequest);
 
-      expect(service.removeUser).toHaveBeenCalledWith('550e8400-e29b-41d4-a716-446655440000');
+      expect(service.removeUser).toHaveBeenCalledWith(
+        '550e8400-e29b-41d4-a716-446655440000',
+      );
     });
   });
 });

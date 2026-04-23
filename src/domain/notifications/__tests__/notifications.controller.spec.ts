@@ -68,7 +68,7 @@ describe('NotificationsController - Comprehensive', () => {
     it('should return paginated notifications with user id from token', async () => {
       const query = { page: 1, limit: 10 };
 
-      const result = await controller.findAll({ user: mockUserToken } as any, query as any);
+      const result = await controller.findAll({ user: mockUserToken }, query);
 
       expect(service.findAll).toHaveBeenCalledWith({
         ...query,
@@ -87,7 +87,7 @@ describe('NotificationsController - Comprehensive', () => {
         sortDir: 'desc' as const,
       };
 
-      await controller.findAll({ user: mockUserToken } as any, query as any);
+      await controller.findAll({ user: mockUserToken }, query);
 
       expect(service.findAll).toHaveBeenCalledWith({
         ...query,
@@ -98,7 +98,7 @@ describe('NotificationsController - Comprehensive', () => {
     it('should override userId from query with token user id', async () => {
       const query = { page: 1, limit: 10, userId: 'different-user' };
 
-      await controller.findAll({ user: mockUserToken } as any, query as any);
+      await controller.findAll({ user: mockUserToken }, query);
 
       expect(service.findAll).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -108,7 +108,10 @@ describe('NotificationsController - Comprehensive', () => {
     });
 
     it('should return paginated response structure', async () => {
-      const result = await controller.findAll({ user: mockUserToken } as any, { page: 1, limit: 10 } as any);
+      const result = await controller.findAll(
+        { user: mockUserToken },
+        { page: 1, limit: 10 },
+      );
 
       expect(result).toHaveProperty('data');
       expect(result).toHaveProperty('total');
@@ -122,42 +125,65 @@ describe('NotificationsController - Comprehensive', () => {
     it('should process read action with notification ids', async () => {
       const actionDto = { type: 1, ids: ['notif-1', 'notif-2'] };
 
-      const result = await controller.processAction({ user: mockUserToken } as any, actionDto as any);
+      const result = await controller.processAction(
+        { user: mockUserToken },
+        actionDto,
+      );
 
-      expect(service.processAction).toHaveBeenCalledWith('user-uuid', 1, ['notif-1', 'notif-2']);
+      expect(service.processAction).toHaveBeenCalledWith('user-uuid', 1, [
+        'notif-1',
+        'notif-2',
+      ]);
       expect(result).toEqual({ message: 'Action completed' });
     });
 
     it('should process delete action', async () => {
       const actionDto = { type: 2, ids: ['notif-1'] };
 
-      await controller.processAction({ user: mockUserToken } as any, actionDto as any);
+      await controller.processAction({ user: mockUserToken }, actionDto);
 
-      expect(service.processAction).toHaveBeenCalledWith('user-uuid', 2, ['notif-1']);
+      expect(service.processAction).toHaveBeenCalledWith('user-uuid', 2, [
+        'notif-1',
+      ]);
     });
 
     it('should process delete all action (no ids needed)', async () => {
       const actionDto = { type: 3 };
 
-      await controller.processAction({ user: mockUserToken } as any, actionDto as any);
+      await controller.processAction({ user: mockUserToken }, actionDto);
 
-      expect(service.processAction).toHaveBeenCalledWith('user-uuid', 3, undefined);
+      expect(service.processAction).toHaveBeenCalledWith(
+        'user-uuid',
+        3,
+        undefined,
+      );
     });
 
     it('should process read all action (no ids needed)', async () => {
       const actionDto = { type: 4 };
 
-      await controller.processAction({ user: mockUserToken } as any, actionDto as any);
+      await controller.processAction({ user: mockUserToken }, actionDto);
 
-      expect(service.processAction).toHaveBeenCalledWith('user-uuid', 4, undefined);
+      expect(service.processAction).toHaveBeenCalledWith(
+        'user-uuid',
+        4,
+        undefined,
+      );
     });
 
     it('should pass user id from token for authorization', async () => {
       const actionDto = { type: 1, ids: ['notif-1'] };
 
-      await controller.processAction({ user: { id: 'specific-user' } } as any, actionDto as any);
+      await controller.processAction(
+        { user: { id: 'specific-user' } } as any,
+        actionDto,
+      );
 
-      expect(service.processAction).toHaveBeenCalledWith('specific-user', expect.any(Number), expect.any(Array));
+      expect(service.processAction).toHaveBeenCalledWith(
+        'specific-user',
+        expect.any(Number),
+        expect.any(Array),
+      );
     });
   });
 });

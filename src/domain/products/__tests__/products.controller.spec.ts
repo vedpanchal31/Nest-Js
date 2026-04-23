@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ProductsController } from '../products.controller';
 import { ProductsService } from '../products.service';
+import { BulkUploadService } from '../../../core/bulk-upload/bulk-upload.service';
 import { UserType } from '../../../core/constants/app.constants';
 import { BadRequestException } from '@nestjs/common';
 import { AuthGuard } from '../../../core/guards/auth.guard';
@@ -53,6 +54,10 @@ describe('ProductsController - Comprehensive', () => {
     deleteProduct: jest.fn(),
   };
 
+  const mockBulkUploadService = {
+    generateSampleExcel: jest.fn(),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [ProductsController],
@@ -60,6 +65,10 @@ describe('ProductsController - Comprehensive', () => {
         {
           provide: ProductsService,
           useValue: mockProductsService,
+        },
+        {
+          provide: BulkUploadService,
+          useValue: mockBulkUploadService,
         },
       ],
     }).compile();
@@ -85,7 +94,11 @@ describe('ProductsController - Comprehensive', () => {
       };
 
       await expect(
-        controller.createProduct({ user: mockSupplierToken } as any, dto as any, []),
+        controller.createProduct(
+          { user: mockSupplierToken } as any,
+          dto as any,
+          [],
+        ),
       ).rejects.toThrow(BadRequestException);
     });
 
@@ -98,7 +111,11 @@ describe('ProductsController - Comprehensive', () => {
       };
 
       await expect(
-        controller.createProduct({ user: mockSupplierToken } as any, dto as any, []),
+        controller.createProduct(
+          { user: mockSupplierToken } as any,
+          dto as any,
+          [],
+        ),
       ).rejects.toThrow('At least one product image is required');
     });
 
@@ -113,7 +130,7 @@ describe('ProductsController - Comprehensive', () => {
 
       const result = await controller.createProduct(
         { user: mockSupplierToken } as any,
-        dto as any,
+        dto,
         mockImages,
       );
 
@@ -136,7 +153,7 @@ describe('ProductsController - Comprehensive', () => {
 
       await controller.createProduct(
         { user: mockAdminToken } as any,
-        dto as any,
+        dto,
         mockImages,
       );
 
@@ -158,9 +175,21 @@ describe('ProductsController - Comprehensive', () => {
       };
       service.getProducts.mockResolvedValue(mockResponse as any);
 
-      await controller.getProducts(1, 10, undefined as any, undefined as any, { user: undefined } as any);
+      await controller.getProducts(
+        1,
+        10,
+        undefined as any,
+        undefined as any,
+        { user: undefined } as any,
+      );
 
-      expect(service.getProducts).toHaveBeenCalledWith(1, 10, undefined, undefined, undefined);
+      expect(service.getProducts).toHaveBeenCalledWith(
+        1,
+        10,
+        undefined,
+        undefined,
+        undefined,
+      );
     });
 
     it('should pass all query parameters to service', async () => {
@@ -172,13 +201,9 @@ describe('ProductsController - Comprehensive', () => {
       };
       service.getProducts.mockResolvedValue(mockResponse as any);
 
-      await controller.getProducts(
-        2,
-        20,
-        'mouse',
-        'category-uuid',
-        { user: mockSupplierToken } as any,
-      );
+      await controller.getProducts(2, 20, 'mouse', 'category-uuid', {
+        user: mockSupplierToken,
+      } as any);
 
       expect(service.getProducts).toHaveBeenCalledWith(
         2,
@@ -198,9 +223,21 @@ describe('ProductsController - Comprehensive', () => {
       };
       service.getProducts.mockResolvedValue(mockResponse as any);
 
-      await controller.getProducts(1, 10, undefined as any, undefined as any, { user: undefined } as any);
+      await controller.getProducts(
+        1,
+        10,
+        undefined as any,
+        undefined as any,
+        { user: undefined } as any,
+      );
 
-      expect(service.getProducts).toHaveBeenCalledWith(1, 10, undefined, undefined, undefined);
+      expect(service.getProducts).toHaveBeenCalledWith(
+        1,
+        10,
+        undefined,
+        undefined,
+        undefined,
+      );
     });
 
     it('should return correct response structure', async () => {
@@ -232,12 +269,15 @@ describe('ProductsController - Comprehensive', () => {
 
     it('should pass correct ID parameter to service', async () => {
       const dto = { name: 'Updated Name' };
-      service.updateProduct.mockResolvedValue({ ...mockProduct, name: 'Updated Name' } as any);
+      service.updateProduct.mockResolvedValue({
+        ...mockProduct,
+        name: 'Updated Name',
+      } as any);
 
       await controller.updateProduct(
         'product-uuid',
         { user: mockSupplierToken } as any,
-        dto as any,
+        dto,
         mockImages,
       );
 
@@ -251,14 +291,17 @@ describe('ProductsController - Comprehensive', () => {
 
     it('should handle product ID in route parameter', async () => {
       const dto = { name: 'Updated Name' };
-      service.updateProduct.mockResolvedValue({ ...mockProduct, name: 'Updated Name' } as any);
+      service.updateProduct.mockResolvedValue({
+        ...mockProduct,
+        name: 'Updated Name',
+      } as any);
 
       const productId = '550e8400-e29b-41d4-a716-446655440000';
 
       await controller.updateProduct(
         productId,
         { user: mockSupplierToken } as any,
-        dto as any,
+        dto,
         [],
       );
 
@@ -272,12 +315,15 @@ describe('ProductsController - Comprehensive', () => {
 
     it('should pass user token to service for authorization', async () => {
       const dto = { name: 'Updated Name' };
-      service.updateProduct.mockResolvedValue({ ...mockProduct, name: 'Updated Name' } as any);
+      service.updateProduct.mockResolvedValue({
+        ...mockProduct,
+        name: 'Updated Name',
+      } as any);
 
       await controller.updateProduct(
         'product-uuid',
         { user: mockAdminToken } as any,
-        dto as any,
+        dto,
         [],
       );
 
@@ -291,12 +337,15 @@ describe('ProductsController - Comprehensive', () => {
 
     it('should handle partial updates', async () => {
       const dto = { price: '29.99' };
-      service.updateProduct.mockResolvedValue({ ...mockProduct, price: 29.99 } as any);
+      service.updateProduct.mockResolvedValue({
+        ...mockProduct,
+        price: 29.99,
+      } as any);
 
       const result = await controller.updateProduct(
         'product-uuid',
         { user: mockSupplierToken } as any,
-        dto as any,
+        dto,
         [],
       );
 
@@ -306,21 +355,37 @@ describe('ProductsController - Comprehensive', () => {
 
   describe('deleteProduct - Route Parameter Validation', () => {
     it('should pass correct ID parameter to service', async () => {
-      service.deleteProduct.mockResolvedValue({ message: 'Product deleted successfully', id: 'product-uuid' });
+      service.deleteProduct.mockResolvedValue({
+        message: 'Product deleted successfully',
+        id: 'product-uuid',
+      });
 
-      await controller.deleteProduct('product-uuid', { user: mockSupplierToken } as any);
+      await controller.deleteProduct('product-uuid', {
+        user: mockSupplierToken,
+      } as any);
 
-      expect(service.deleteProduct).toHaveBeenCalledWith('product-uuid', mockSupplierToken);
+      expect(service.deleteProduct).toHaveBeenCalledWith(
+        'product-uuid',
+        mockSupplierToken,
+      );
     });
 
     it('should handle product ID in route parameter', async () => {
-      service.deleteProduct.mockResolvedValue({ message: 'Product deleted successfully', id: 'product-uuid' });
+      service.deleteProduct.mockResolvedValue({
+        message: 'Product deleted successfully',
+        id: 'product-uuid',
+      });
 
       const productId = '550e8400-e29b-41d4-a716-446655440000';
 
-      await controller.deleteProduct(productId, { user: mockAdminToken } as any);
+      await controller.deleteProduct(productId, {
+        user: mockAdminToken,
+      } as any);
 
-      expect(service.deleteProduct).toHaveBeenCalledWith(productId, mockAdminToken);
+      expect(service.deleteProduct).toHaveBeenCalledWith(
+        productId,
+        mockAdminToken,
+      );
     });
 
     it('should return correct response structure on successful delete', async () => {
@@ -328,8 +393,10 @@ describe('ProductsController - Comprehensive', () => {
         message: 'Product deleted successfully',
         id: 'product-uuid',
       });
-      
-      const result = await controller.deleteProduct('product-uuid', { user: mockSupplierToken } as any);
+
+      const result = await controller.deleteProduct('product-uuid', {
+        user: mockSupplierToken,
+      } as any);
 
       expect(result).toHaveProperty('message');
       expect(result).toHaveProperty('id');
@@ -337,9 +404,14 @@ describe('ProductsController - Comprehensive', () => {
     });
 
     it('should pass user token for authorization check', async () => {
-      service.deleteProduct.mockResolvedValue({ message: 'Product deleted successfully', id: 'product-uuid' });
+      service.deleteProduct.mockResolvedValue({
+        message: 'Product deleted successfully',
+        id: 'product-uuid',
+      });
 
-      await controller.deleteProduct('product-uuid', { user: mockSupplierToken } as any);
+      await controller.deleteProduct('product-uuid', {
+        user: mockSupplierToken,
+      } as any);
 
       expect(service.deleteProduct).toHaveBeenCalledWith(
         expect.any(String),

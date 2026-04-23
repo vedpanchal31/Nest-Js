@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ValidationPipe, CanActivate } from '@nestjs/common';
 import request from 'supertest';
@@ -31,7 +30,9 @@ describe('CartController (e2e)', () => {
       ...mockCartItem,
       quantity: 5,
     }),
-    removeItem: jest.fn().mockResolvedValue({ message: 'Item removed successfully' }),
+    removeItem: jest
+      .fn()
+      .mockResolvedValue({ message: 'Item removed successfully' }),
     clearCart: jest.fn().mockResolvedValue({ affected: 2 }),
   };
 
@@ -63,7 +64,9 @@ describe('CartController (e2e)', () => {
       .compile();
 
     app = moduleFixture.createNestApplication();
-    app.useGlobalPipes(new ValidationPipe({ transform: true, whitelist: true }));
+    app.useGlobalPipes(
+      new ValidationPipe({ transform: true, whitelist: true }),
+    );
     await app.init();
   });
 
@@ -124,7 +127,10 @@ describe('CartController (e2e)', () => {
         .expect(201);
 
       expect(response.body).toBeDefined();
-      expect(mockCartService.addToCart).toHaveBeenCalledWith('user-uuid', addDto);
+      expect(mockCartService.addToCart).toHaveBeenCalledWith(
+        'user-uuid',
+        addDto,
+      );
     });
 
     it('should return 400 when productId is missing', async () => {
@@ -239,7 +245,10 @@ describe('CartController (e2e)', () => {
         .set('Authorization', 'Bearer mock-jwt-token')
         .expect(200);
 
-      expect(mockCartService.removeItem).toHaveBeenCalledWith('user-uuid', customId);
+      expect(mockCartService.removeItem).toHaveBeenCalledWith(
+        'user-uuid',
+        customId,
+      );
     });
   });
 

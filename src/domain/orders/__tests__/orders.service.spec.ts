@@ -8,7 +8,11 @@ import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { CartService } from '../../cart/cart.service';
 import { DeliveryPartnerService } from '../../delivery-partners/delivery-partners.service';
 import { InvoiceService } from '../../../core/services/invoice.service';
-import { OrderStatus, PaymentMethod, UserType } from '../../../core/constants/app.constants';
+import {
+  OrderStatus,
+  PaymentMethod,
+  UserType,
+} from '../../../core/constants/app.constants';
 import { getQueueToken } from '@nestjs/bull';
 import { NotificationType } from 'src/domain/notifications/entities/notification.entity';
 
@@ -124,8 +128,8 @@ describe('OrderService - Comprehensive', () => {
   let consoleErrorSpy: jest.SpyInstance;
 
   beforeAll(() => {
-    consoleLogSpy = jest.spyOn(console, 'log').mockImplementation(() => { });
-    consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => { });
+    consoleLogSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
+    consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
   });
 
   afterAll(() => {
@@ -191,11 +195,16 @@ describe('OrderService - Comprehensive', () => {
     };
 
     it('should throw BadRequestException when cart is empty', async () => {
-      cartService.getCart.mockResolvedValue({ data: [], totalItems: 0, totalPages: 0, currentPage: 1 });
+      cartService.getCart.mockResolvedValue({
+        data: [],
+        totalItems: 0,
+        totalPages: 0,
+        currentPage: 1,
+      });
 
-      await expect(service.createOrder('user-uuid', createOrderDto)).rejects.toThrow(
-        BadRequestException,
-      );
+      await expect(
+        service.createOrder('user-uuid', createOrderDto),
+      ).rejects.toThrow(BadRequestException);
     });
 
     it('should create order with CASH_ON_DELIVERY as CONFIRMED status', async () => {
@@ -206,7 +215,10 @@ describe('OrderService - Comprehensive', () => {
         currentPage: 1,
       });
 
-      const dto = { ...createOrderDto, paymentMethod: PaymentMethod.CASH_ON_DELIVERY };
+      const dto = {
+        ...createOrderDto,
+        paymentMethod: PaymentMethod.CASH_ON_DELIVERY,
+      };
       const result = await service.createOrder('user-uuid', dto);
 
       expect(mockQueryRunner.manager.create).toHaveBeenCalledWith(
@@ -240,7 +252,11 @@ describe('OrderService - Comprehensive', () => {
     it('should calculate correct total amount from cart items', async () => {
       cartService.getCart.mockResolvedValue({
         data: [
-          { ...mockCartItem, quantity: 3, product: { ...mockCartItem.product, price: 50 } as any },
+          {
+            ...mockCartItem,
+            quantity: 3,
+            product: { ...mockCartItem.product, price: 50 },
+          },
         ],
         totalItems: 1,
         totalPages: 1,
@@ -316,7 +332,9 @@ describe('OrderService - Comprehensive', () => {
       });
       mockQueryRunner.manager.save.mockRejectedValue(new Error('DB Error'));
 
-      await expect(service.createOrder('user-uuid', createOrderDto)).rejects.toThrow('DB Error');
+      await expect(
+        service.createOrder('user-uuid', createOrderDto),
+      ).rejects.toThrow('DB Error');
       expect(mockQueryRunner.rollbackTransaction).toHaveBeenCalled();
     });
   });
@@ -371,60 +389,86 @@ describe('OrderService - Comprehensive', () => {
     it('should throw NotFoundException when order not found', async () => {
       orderRepository.findOne.mockResolvedValue(null);
 
-      await expect(service.getOrderSummary('non-existent', 'user-uuid')).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(
+        service.getOrderSummary('non-existent', 'user-uuid'),
+      ).rejects.toThrow(NotFoundException);
     });
 
     it('should throw NotFoundException when order belongs to different user', async () => {
       orderRepository.findOne.mockResolvedValue(null);
 
-      await expect(service.getOrderSummary('order-uuid', 'different-user')).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(
+        service.getOrderSummary('order-uuid', 'different-user'),
+      ).rejects.toThrow(NotFoundException);
     });
   });
 
   describe('cancelOrder - Status Validation', () => {
     it('should cancel PENDING order', async () => {
-      orderRepository.findOne.mockResolvedValue({ ...mockOrder, status: OrderStatus.PENDING });
-      const saveSpy = jest.fn().mockResolvedValue({ ...mockOrder, status: OrderStatus.CANCELLED });
+      orderRepository.findOne.mockResolvedValue({
+        ...mockOrder,
+        status: OrderStatus.PENDING,
+      });
+      const saveSpy = jest
+        .fn()
+        .mockResolvedValue({ ...mockOrder, status: OrderStatus.CANCELLED });
       orderRepository.save = saveSpy;
 
       const result = await service.cancelOrder('order-uuid', 'user-uuid');
 
-      expect(saveSpy).toHaveBeenCalledWith(expect.objectContaining({ status: OrderStatus.CANCELLED }));
+      expect(saveSpy).toHaveBeenCalledWith(
+        expect.objectContaining({ status: OrderStatus.CANCELLED }),
+      );
     });
 
     it('should cancel CONFIRMED order', async () => {
-      orderRepository.findOne.mockResolvedValue({ ...mockOrder, status: OrderStatus.CONFIRMED });
-      const saveSpy = jest.fn().mockResolvedValue({ ...mockOrder, status: OrderStatus.CANCELLED });
+      orderRepository.findOne.mockResolvedValue({
+        ...mockOrder,
+        status: OrderStatus.CONFIRMED,
+      });
+      const saveSpy = jest
+        .fn()
+        .mockResolvedValue({ ...mockOrder, status: OrderStatus.CANCELLED });
       orderRepository.save = saveSpy;
 
       await service.cancelOrder('order-uuid', 'user-uuid');
 
-      expect(saveSpy).toHaveBeenCalledWith(expect.objectContaining({ status: OrderStatus.CANCELLED }));
+      expect(saveSpy).toHaveBeenCalledWith(
+        expect.objectContaining({ status: OrderStatus.CANCELLED }),
+      );
     });
 
     it('should throw BadRequestException when order already SHIPPED', async () => {
-      orderRepository.findOne.mockResolvedValue({ ...mockOrder, status: OrderStatus.SHIPPED });
+      orderRepository.findOne.mockResolvedValue({
+        ...mockOrder,
+        status: OrderStatus.SHIPPED,
+      });
 
-      await expect(service.cancelOrder('order-uuid', 'user-uuid')).rejects.toThrow(
-        BadRequestException,
-      );
+      await expect(
+        service.cancelOrder('order-uuid', 'user-uuid'),
+      ).rejects.toThrow(BadRequestException);
     });
 
     it('should throw BadRequestException when order already DELIVERED', async () => {
-      orderRepository.findOne.mockResolvedValue({ ...mockOrder, status: OrderStatus.DELIVERED });
+      orderRepository.findOne.mockResolvedValue({
+        ...mockOrder,
+        status: OrderStatus.DELIVERED,
+      });
 
-      await expect(service.cancelOrder('order-uuid', 'user-uuid')).rejects.toThrow(
-        BadRequestException,
-      );
+      await expect(
+        service.cancelOrder('order-uuid', 'user-uuid'),
+      ).rejects.toThrow(BadRequestException);
     });
 
     it('should send cancellation notification', async () => {
-      orderRepository.findOne.mockResolvedValue({ ...mockOrder, status: OrderStatus.PENDING });
-      orderRepository.save.mockResolvedValue({ ...mockOrder, status: OrderStatus.CANCELLED });
+      orderRepository.findOne.mockResolvedValue({
+        ...mockOrder,
+        status: OrderStatus.PENDING,
+      });
+      orderRepository.save.mockResolvedValue({
+        ...mockOrder,
+        status: OrderStatus.CANCELLED,
+      });
 
       await service.cancelOrder('order-uuid', 'user-uuid');
 
@@ -450,7 +494,9 @@ describe('OrderService - Comprehensive', () => {
         orderBy: jest.fn().mockReturnThis(),
         getManyAndCount: jest.fn().mockResolvedValue([[mockOrder], 1]),
       };
-      orderRepository.createQueryBuilder.mockReturnValue(mockQueryBuilder as any);
+      orderRepository.createQueryBuilder.mockReturnValue(
+        mockQueryBuilder as any,
+      );
 
       await service.getManagementOrders(mockAdminToken, 1, 10);
 
@@ -468,9 +514,16 @@ describe('OrderService - Comprehensive', () => {
         orderBy: jest.fn().mockReturnThis(),
         getManyAndCount: jest.fn().mockResolvedValue([[mockOrder], 1]),
       };
-      orderRepository.createQueryBuilder.mockReturnValue(mockQueryBuilder as any);
+      orderRepository.createQueryBuilder.mockReturnValue(
+        mockQueryBuilder as any,
+      );
 
-      await service.getManagementOrders(mockAdminToken, 1, 10, OrderStatus.SHIPPED);
+      await service.getManagementOrders(
+        mockAdminToken,
+        1,
+        10,
+        OrderStatus.SHIPPED,
+      );
 
       expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith(
         'order.status = :status',
@@ -489,12 +542,21 @@ describe('OrderService - Comprehensive', () => {
         orderBy: jest.fn().mockReturnThis(),
         getManyAndCount: jest.fn().mockResolvedValue([[mockOrder], 1]),
       };
-      orderRepository.createQueryBuilder.mockReturnValue(mockQueryBuilder as any);
+      orderRepository.createQueryBuilder.mockReturnValue(
+        mockQueryBuilder as any,
+      );
 
       const startDate = new Date('2024-01-01');
       const endDate = new Date('2024-12-31');
 
-      await service.getManagementOrders(mockAdminToken, 1, 10, undefined, startDate, endDate);
+      await service.getManagementOrders(
+        mockAdminToken,
+        1,
+        10,
+        undefined,
+        startDate,
+        endDate,
+      );
 
       expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith(
         'order.createdAt BETWEEN :startDate AND :endDate',
@@ -510,12 +572,20 @@ describe('OrderService - Comprehensive', () => {
         innerJoin: jest.fn().mockReturnThis(),
         where: jest.fn().mockReturnThis(),
         andWhere: jest.fn().mockReturnThis(),
-        getOne: jest.fn().mockResolvedValue({ ...mockOrder, status: OrderStatus.CANCELLED }),
+        getOne: jest
+          .fn()
+          .mockResolvedValue({ ...mockOrder, status: OrderStatus.CANCELLED }),
       };
-      orderRepository.createQueryBuilder.mockReturnValue(mockQueryBuilder as any);
+      orderRepository.createQueryBuilder.mockReturnValue(
+        mockQueryBuilder as any,
+      );
 
       await expect(
-        service.updateOrderStatus('order-uuid', { status: OrderStatus.CONFIRMED }, mockAdminToken),
+        service.updateOrderStatus(
+          'order-uuid',
+          { status: OrderStatus.CONFIRMED },
+          mockAdminToken,
+        ),
       ).rejects.toThrow(BadRequestException);
     });
 
@@ -525,15 +595,27 @@ describe('OrderService - Comprehensive', () => {
         innerJoin: jest.fn().mockReturnThis(),
         where: jest.fn().mockReturnThis(),
         andWhere: jest.fn().mockReturnThis(),
-        getOne: jest.fn().mockResolvedValue({ ...mockOrder, status: OrderStatus.PENDING }),
+        getOne: jest
+          .fn()
+          .mockResolvedValue({ ...mockOrder, status: OrderStatus.PENDING }),
       };
-      orderRepository.createQueryBuilder.mockReturnValue(mockQueryBuilder as any);
-      const saveSpy = jest.fn().mockResolvedValue({ ...mockOrder, status: OrderStatus.SHIPPED });
+      orderRepository.createQueryBuilder.mockReturnValue(
+        mockQueryBuilder as any,
+      );
+      const saveSpy = jest
+        .fn()
+        .mockResolvedValue({ ...mockOrder, status: OrderStatus.SHIPPED });
       orderRepository.save = saveSpy;
 
-      await service.updateOrderStatus('order-uuid', { status: OrderStatus.SHIPPED }, mockAdminToken);
+      await service.updateOrderStatus(
+        'order-uuid',
+        { status: OrderStatus.SHIPPED },
+        mockAdminToken,
+      );
 
-      expect(saveSpy).toHaveBeenCalledWith(expect.objectContaining({ status: OrderStatus.SHIPPED }));
+      expect(saveSpy).toHaveBeenCalledWith(
+        expect.objectContaining({ status: OrderStatus.SHIPPED }),
+      );
     });
   });
 
@@ -559,7 +641,9 @@ describe('OrderService - Comprehensive', () => {
     it('should throw NotFoundException when order not found', async () => {
       orderRepository.findOne.mockResolvedValue(null);
 
-      await expect(service.deleteOrder('non-existent')).rejects.toThrow(NotFoundException);
+      await expect(service.deleteOrder('non-existent')).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 
@@ -567,7 +651,11 @@ describe('OrderService - Comprehensive', () => {
     it('should return safe order details without sensitive info', async () => {
       orderRepository.findOne.mockResolvedValue({
         ...mockOrder,
-        user: { id: 'user-uuid', email: 'user@example.com', profile: { name: 'John Doe' } },
+        user: {
+          id: 'user-uuid',
+          email: 'user@example.com',
+          profile: { name: 'John Doe' },
+        },
         items: [{ product: { name: 'Product 1' }, quantity: 2, price: 50 }],
       } as any);
 
@@ -585,9 +673,9 @@ describe('OrderService - Comprehensive', () => {
     it('should throw NotFoundException when order not found', async () => {
       orderRepository.findOne.mockResolvedValue(null);
 
-      await expect(service.getPublicOrderDetails('non-existent')).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(
+        service.getPublicOrderDetails('non-existent'),
+      ).rejects.toThrow(NotFoundException);
     });
   });
 
@@ -702,21 +790,23 @@ describe('OrderService - Comprehensive', () => {
 
       const mockReportOrder = {
         ...mockOrder,
-        items: [{
-          id: 'item-uuid',
-          quantity: 2,
-          price: 99.99,
-          order: mockOrder,
-          product: {
-            id: 'product-uuid',
-            name: 'Test Product',
-            supplier: {
-              id: 'supplier-uuid',
-              email: 'supplier@example.com',
-              profile: { name: 'Supplier Name' },
+        items: [
+          {
+            id: 'item-uuid',
+            quantity: 2,
+            price: 99.99,
+            order: mockOrder,
+            product: {
+              id: 'product-uuid',
+              name: 'Test Product',
+              supplier: {
+                id: 'supplier-uuid',
+                email: 'supplier@example.com',
+                profile: { name: 'Supplier Name' },
+              },
             },
           },
-        }],
+        ],
       };
 
       // Reset and setup mock for this test
@@ -728,7 +818,9 @@ describe('OrderService - Comprehensive', () => {
         getMany: jest.fn().mockResolvedValue([mockReportOrder]),
       });
 
-      const result = await service.generateOrdersExcelReport(mockAdminUser as any);
+      const result = await service.generateOrdersExcelReport(
+        mockAdminUser as any,
+      );
 
       expect(result).toBeInstanceOf(Buffer);
       expect(orderRepository.createQueryBuilder).toHaveBeenCalled();
@@ -743,21 +835,23 @@ describe('OrderService - Comprehensive', () => {
 
       const mockReportOrder = {
         ...mockOrder,
-        items: [{
-          id: 'item-uuid',
-          quantity: 2,
-          price: 99.99,
-          order: mockOrder,
-          product: {
-            id: 'product-uuid',
-            name: 'Test Product',
-            supplier: {
-              id: 'supplier-uuid',
-              email: 'supplier@example.com',
-              profile: { name: 'Supplier Name' },
+        items: [
+          {
+            id: 'item-uuid',
+            quantity: 2,
+            price: 99.99,
+            order: mockOrder,
+            product: {
+              id: 'product-uuid',
+              name: 'Test Product',
+              supplier: {
+                id: 'supplier-uuid',
+                email: 'supplier@example.com',
+                profile: { name: 'Supplier Name' },
+              },
             },
           },
-        }],
+        ],
       };
 
       const mockInnerJoin = jest.fn().mockReturnThis();
@@ -773,7 +867,9 @@ describe('OrderService - Comprehensive', () => {
         getMany: jest.fn().mockResolvedValue([mockReportOrder]),
       });
 
-      const result = await service.generateOrdersExcelReport(mockSupplierUser as any);
+      const result = await service.generateOrdersExcelReport(
+        mockSupplierUser as any,
+      );
 
       expect(result).toBeInstanceOf(Buffer);
       expect(mockInnerJoin).toHaveBeenCalled();

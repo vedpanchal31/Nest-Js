@@ -16,7 +16,7 @@ export class RoleGuard implements CanActivate {
   constructor(
     private reflector: Reflector,
     private readonly rolesService: RolesService,
-  ) { }
+  ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context

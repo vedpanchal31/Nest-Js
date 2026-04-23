@@ -59,7 +59,7 @@ describe('JwtStrategy - Comprehensive', () => {
         userType: UserType.USER,
       };
 
-      const result = strategy.validate(payload as any);
+      const result = strategy.validate(payload);
 
       expect(result).toEqual(payload);
     });
@@ -72,7 +72,7 @@ describe('JwtStrategy - Comprehensive', () => {
         userType: UserType.ADMIN,
       };
 
-      const result = strategy.validate(payload as any);
+      const result = strategy.validate(payload);
 
       expect(result.id).toBe('admin-uuid');
       expect(result.email).toBe('admin@example.com');
@@ -99,7 +99,7 @@ describe('JwtStrategy - Comprehensive', () => {
         userType: UserType.DELIVERY_PARTNER,
       };
 
-      const result = strategy.validate(payload as any);
+      const result = strategy.validate(payload);
 
       expect(result).toEqual(payload);
     });
@@ -112,7 +112,7 @@ describe('JwtStrategy - Comprehensive', () => {
         userType: UserType.SUPPLIER,
       };
 
-      const result = strategy.validate(payload as any);
+      const result = strategy.validate(payload);
 
       expect(result).toEqual(payload);
     });
@@ -126,7 +126,7 @@ describe('JwtStrategy - Comprehensive', () => {
         userType: UserType.USER,
       };
 
-      const result = strategy.validate(payload as any);
+      const result = strategy.validate(payload);
 
       // The returned value becomes req.user
       expect(result).toBe(payload);

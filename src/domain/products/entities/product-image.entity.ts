@@ -17,7 +17,9 @@ export class ProductImage {
   @Column()
   url: string;
 
-  @ManyToOne(() => Product, (product) => product.images, { onDelete: 'CASCADE' })
+  @ManyToOne(() => Product, (product) => product.images, {
+    onDelete: 'CASCADE',
+  })
   @JoinColumn({ name: 'product_id' })
   product: Product;
 

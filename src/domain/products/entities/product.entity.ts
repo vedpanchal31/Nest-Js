@@ -28,6 +28,18 @@ export class Product {
   @Column({ type: 'numeric', precision: 10, scale: 2 })
   price: number;
 
+  @Column({ type: 'int', default: 0, name: 'stock_quantity' })
+  stockQuantity: number;
+
+  @Column({ type: 'int', default: 10, name: 'min_stock_threshold' })
+  minStockThreshold: number;
+
+  @Column({ type: 'int', default: 20, name: 'reorder_level' })
+  reorderLevel: number;
+
+  @Column({ type: 'boolean', default: true, name: 'is_available' })
+  isAvailable: boolean;
+
   @OneToMany(() => ProductImage, (image) => image.product, { cascade: true })
   images: ProductImage[];
 

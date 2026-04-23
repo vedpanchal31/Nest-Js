@@ -77,7 +77,9 @@ describe('InvoiceService - Comprehensive', () => {
       close: jest.fn().mockResolvedValue(undefined),
     };
     (puppeteer.launch as jest.Mock).mockResolvedValue(mockBrowser);
-    (QRCode.toDataURL as jest.Mock).mockResolvedValue('data:image/png;base64,qrcode123');
+    (QRCode.toDataURL as jest.Mock).mockResolvedValue(
+      'data:image/png;base64,qrcode123',
+    );
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -152,7 +154,9 @@ describe('InvoiceService - Comprehensive', () => {
     it('should close browser even on error', async () => {
       mockPage.pdf.mockRejectedValue(new Error('PDF generation failed'));
 
-      await expect(service.generateInvoice(mockOrder)).rejects.toThrow('PDF generation failed');
+      await expect(service.generateInvoice(mockOrder)).rejects.toThrow(
+        'PDF generation failed',
+      );
       expect(mockBrowser.close).toHaveBeenCalled();
     });
 
@@ -204,7 +208,12 @@ describe('InvoiceService - Comprehensive', () => {
       };
       const qrCodeDataUrl = 'data:image/png;base64,test';
 
-      const result = (service as any).generateInvoiceHTML(mockOrder, companyLogo.logoUrl, companyInfo, qrCodeDataUrl);
+      const result = (service as any).generateInvoiceHTML(
+        mockOrder,
+        companyLogo.logoUrl,
+        companyInfo,
+        qrCodeDataUrl,
+      );
 
       expect(result).toContain('<!DOCTYPE html>');
       expect(result).toContain('Invoice');
@@ -218,7 +227,12 @@ describe('InvoiceService - Comprehensive', () => {
       const companyInfo = { name: 'Velora' };
       const qrCodeDataUrl = 'data:image/png;base64,test';
 
-      const result = (service as any).generateInvoiceHTML(mockOrder, companyLogo, companyInfo, qrCodeDataUrl);
+      const result = (service as any).generateInvoiceHTML(
+        mockOrder,
+        companyLogo,
+        companyInfo,
+        qrCodeDataUrl,
+      );
 
       expect(result).toContain('status-stamp');
     });
@@ -251,24 +265,28 @@ describe('InvoiceService - Comprehensive', () => {
     });
 
     it('should return Unknown for invalid status', () => {
-      const result = (service as any).getOrderStatusText(999 as OrderStatus);
+      const result = (service as any).getOrderStatusText(999);
       expect(result).toBe('Unknown');
     });
   });
 
   describe('getPaymentMethodText - Payment Method Conversion', () => {
     it('should return Cash on Delivery for CASH_ON_DELIVERY', () => {
-      const result = (service as any).getPaymentMethodText(PaymentMethod.CASH_ON_DELIVERY);
+      const result = (service as any).getPaymentMethodText(
+        PaymentMethod.CASH_ON_DELIVERY,
+      );
       expect(result).toBe('Cash on Delivery');
     });
 
     it('should return Online Payment for ONLINE', () => {
-      const result = (service as any).getPaymentMethodText(PaymentMethod.ONLINE);
+      const result = (service as any).getPaymentMethodText(
+        PaymentMethod.ONLINE,
+      );
       expect(result).toBe('Online Payment');
     });
 
     it('should return Unknown for invalid method', () => {
-      const result = (service as any).getPaymentMethodText(999 as PaymentMethod);
+      const result = (service as any).getPaymentMethodText(999);
       expect(result).toBe('Unknown');
     });
   });
@@ -299,7 +317,7 @@ describe('InvoiceService - Comprehensive', () => {
     });
 
     it('should build pending stamp for unknown status (default case)', () => {
-      const result = (service as any).buildStatusStamp(999 as OrderStatus);
+      const result = (service as any).buildStatusStamp(999);
       expect(result).toContain('pending');
       expect(result).toContain('PENDING');
     });
@@ -339,7 +357,10 @@ describe('InvoiceService - Comprehensive', () => {
     describe('buildAddressSection - Address HTML', () => {
       it('should build address section with order details', () => {
         const companyInfo = { name: 'Velora Inc.' };
-        const result = (service as any).buildAddressSection(mockOrder, companyInfo);
+        const result = (service as any).buildAddressSection(
+          mockOrder,
+          companyInfo,
+        );
 
         expect(result).toContain('Sold By');
         expect(result).toContain('Velora Inc.');
@@ -358,9 +379,17 @@ describe('InvoiceService - Comprehensive', () => {
 
     describe('buildAmazonHeader - Header HTML', () => {
       it('should build header with logo', () => {
-        const logoConfig = { maxHeight: '100px', maxWidth: '350px', fallbackText: 'Velora' };
+        const logoConfig = {
+          maxHeight: '100px',
+          maxWidth: '350px',
+          fallbackText: 'Velora',
+        };
         const companyInfo = { name: 'Velora Inc.' };
-        const result = (service as any).buildAmazonHeader('https://example.com/logo.png', logoConfig, companyInfo);
+        const result = (service as any).buildAmazonHeader(
+          'https://example.com/logo.png',
+          logoConfig,
+          companyInfo,
+        );
 
         expect(result).toContain('Invoice');
         expect(result).toContain('https://example.com/logo.png');
@@ -369,7 +398,11 @@ describe('InvoiceService - Comprehensive', () => {
       it('should use text fallback when no logo', () => {
         const logoConfig = { fallbackText: 'Velora' };
         const companyInfo = { name: 'Velora Inc.' };
-        const result = (service as any).buildAmazonHeader('', logoConfig, companyInfo);
+        const result = (service as any).buildAmazonHeader(
+          '',
+          logoConfig,
+          companyInfo,
+        );
 
         expect(result).toContain('Velora');
       });
@@ -383,7 +416,7 @@ describe('InvoiceService - Comprehensive', () => {
           'Jan 15, 2024',
           'Feb 14, 2024',
           'Online Payment',
-          'Confirmed'
+          'Confirmed',
         );
 
         expect(result).toContain('VL-TEST123');
@@ -395,7 +428,10 @@ describe('InvoiceService - Comprehensive', () => {
 
     describe('buildQRCodeSection - QR Code HTML', () => {
       it('should build QR code section', () => {
-        const result = (service as any).buildQRCodeSection('data:image/png;base64,abc123', mockOrder.id);
+        const result = (service as any).buildQRCodeSection(
+          'data:image/png;base64,abc123',
+          mockOrder.id,
+        );
 
         expect(result).toContain('Scan to View Order');
         expect(result).toContain('data:image/png;base64,abc123');
@@ -404,7 +440,10 @@ describe('InvoiceService - Comprehensive', () => {
 
     describe('buildNotesSection - Notes HTML', () => {
       it('should build notes section', () => {
-        const companyInfo = { email: 'support@velora.com', phone: '+1 (555) 123-4567' };
+        const companyInfo = {
+          email: 'support@velora.com',
+          phone: '+1 (555) 123-4567',
+        };
         const result = (service as any).buildNotesSection(companyInfo);
 
         expect(result).toContain('Important Notes');
@@ -446,7 +485,10 @@ describe('InvoiceService - Comprehensive', () => {
 
   describe('buildNotesSection - Notes HTML', () => {
     it('should build notes section', () => {
-      const companyInfo = { email: 'support@velora.com', phone: '+1 (555) 123-4567' };
+      const companyInfo = {
+        email: 'support@velora.com',
+        phone: '+1 (555) 123-4567',
+      };
       const result = (service as any).buildNotesSection(companyInfo);
 
       expect(result).toContain('Important Notes');

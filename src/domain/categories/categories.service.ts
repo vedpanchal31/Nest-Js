@@ -10,11 +10,27 @@ import { Category } from './entities/category.entity';
 import { CreateCategoryDto } from './dtos/create-category.dto';
 import { UpdateCategoryDto } from './dtos/update-category.dto';
 import { CloudinaryService } from 'src/core/cloudinary/cloudinary.service';
-import { BulkUploadService, BulkUploadResult, ParsedRow } from 'src/core/bulk-upload/bulk-upload.service';
+import {
+  BulkUploadService,
+  BulkUploadResult,
+  ParsedRow,
+} from 'src/core/bulk-upload/bulk-upload.service';
 import { CategoryImage } from './entities/category-image.entity';
 
 @Injectable()
 export class CategoriesService {
+  private getRowTextValue(value: unknown): string {
+    if (
+      typeof value === 'string' ||
+      typeof value === 'number' ||
+      typeof value === 'boolean'
+    ) {
+      return String(value).trim();
+    }
+
+    return '';
+  }
+
   constructor(
     @InjectRepository(Category)
     private readonly categoriesRepository: Repository<Category>,
@@ -22,7 +38,7 @@ export class CategoriesService {
     private readonly categoryImageRepository: Repository<CategoryImage>,
     private readonly cloudinaryService: CloudinaryService,
     private readonly bulkUploadService: BulkUploadService,
-  ) { }
+  ) {}
 
   async getAllCategories(page: number, limit: number, search?: string) {
     const skip = (page - 1) * limit;
@@ -64,7 +80,10 @@ export class CategoriesService {
     return category;
   }
 
-  async createCategory(dto: CreateCategoryDto, imageFiles?: Express.Multer.File[]) {
+  async createCategory(
+    dto: CreateCategoryDto,
+    imageFiles?: Express.Multer.File[],
+  ) {
     const existing = await this.categoriesRepository.findOne({
       where: { name: dto.name },
     });
@@ -102,7 +121,11 @@ export class CategoriesService {
     });
   }
 
-  async updateCategory(id: string, dto: UpdateCategoryDto, imageFile?: Express.Multer.File) {
+  async updateCategory(
+    id: string,
+    dto: UpdateCategoryDto,
+    imageFile?: Express.Multer.File,
+  ) {
     const category = await this.categoriesRepository.findOne({
       where: { id },
     });
@@ -161,7 +184,10 @@ export class CategoriesService {
     // Parse Excel file
     let rows: ParsedRow[];
     try {
-      rows = await this.bulkUploadService.parseExcelFile(excelBuffer, expectedColumns);
+      rows = await this.bulkUploadService.parseExcelFile(
+        excelBuffer,
+        expectedColumns,
+      );
     } catch (error) {
       throw new BadRequestException(
         `Failed to parse Excel file: ${error instanceof Error ? error.message : 'Unknown error'}`,
@@ -177,7 +203,13 @@ export class CategoriesService {
       ? this.bulkUploadService.extractImagesFromZip(zipBuffer)
       : new Map<string, Buffer>();
 
-    const errors: Array<{ row: number; column: string; field: string; value: unknown; message: string }> = [];
+    const errors: Array<{
+      row: number;
+      column: string;
+      field: string;
+      value: unknown;
+      message: string;
+    }> = [];
 
     // Create column mapping
     const columnMap: Record<string, string> = {};
@@ -197,7 +229,10 @@ export class CategoriesService {
       let hasRowError = false;
 
       // Validate required fields
-      const rowErrors = this.bulkUploadService.validateRequiredFields(row, requiredFields);
+      const rowErrors = this.bulkUploadService.validateRequiredFields(
+        row,
+        requiredFields,
+      );
       if (rowErrors.length > 0) {
         rowErrors.forEach((err) => {
           errors.push({
@@ -211,11 +246,9 @@ export class CategoriesService {
         hasRowError = true;
       }
 
-      const name = String(row.data['Name*'] || '').trim();
-      const description = row.data['Description']
-        ? String(row.data['Description']).trim()
-        : '';
-      const imagesRaw = row.data['Image'] ? String(row.data['Image']).trim() : '';
+      const name = this.getRowTextValue(row.data['Name*']);
+      const description = this.getRowTextValue(row.data['Description']);
+      const imagesRaw = this.getRowTextValue(row.data['Image']);
 
       // Parse image names (comma-separated like products)
       const imageNames = imagesRaw
@@ -243,7 +276,10 @@ export class CategoriesService {
 
       // Validate all images exist in ZIP if specified
       if (imageNames.length > 0) {
-        const { unmatched } = this.bulkUploadService.matchImages(imageNames, zipImages);
+        const { unmatched } = this.bulkUploadService.matchImages(
+          imageNames,
+          zipImages,
+        );
         for (const unmatchedName of unmatched) {
           errors.push({
             row: row.rowNumber,
@@ -270,7 +306,8 @@ export class CategoriesService {
     if (errors.length > 0) {
       return {
         success: false,
-        message: 'Failed to create categories. Please fix the errors and try again.',
+        message:
+          'Failed to create categories. Please fix the errors and try again.',
         totalRows: rows.length,
         successCount: 0,
         errorCount: errors.length,
@@ -293,7 +330,10 @@ export class CategoriesService {
 
         // Upload ALL images if provided (like Products)
         if (validRow.imageNames.length > 0) {
-          const { matched } = this.bulkUploadService.matchImages(validRow.imageNames, zipImages);
+          const { matched } = this.bulkUploadService.matchImages(
+            validRow.imageNames,
+            zipImages,
+          );
 
           for (const [imageName, imageBuffer] of matched) {
             try {
@@ -322,7 +362,10 @@ export class CategoriesService {
 
               await this.categoryImageRepository.save(categoryImage);
             } catch (uploadError) {
-              console.error(`Failed to upload image ${imageName}:`, uploadError);
+              console.error(
+                `Failed to upload image ${imageName}:`,
+                uploadError,
+              );
             }
           }
         }

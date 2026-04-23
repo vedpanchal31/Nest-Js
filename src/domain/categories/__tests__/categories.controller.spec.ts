@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { CategoriesController } from '../categories.controller';
 import { CategoriesService } from '../categories.service';
+import { BulkUploadService } from '../../../core/bulk-upload/bulk-upload.service';
 
 jest.mock('../../../core/guards/auth.guard', () => ({
   AuthGuard: jest.fn().mockImplementation(() => ({
@@ -35,8 +36,14 @@ describe('CategoriesController - Comprehensive', () => {
     }),
     getAllCategoriesById: jest.fn().mockResolvedValue(mockCategory),
     createCategory: jest.fn().mockResolvedValue(mockCategory),
-    updateCategory: jest.fn().mockResolvedValue({ ...mockCategory, name: 'Updated' }),
+    updateCategory: jest
+      .fn()
+      .mockResolvedValue({ ...mockCategory, name: 'Updated' }),
     deleteCategory: jest.fn().mockResolvedValue(mockCategory),
+  };
+
+  const mockBulkUploadService = {
+    generateSampleExcel: jest.fn(),
   };
 
   beforeEach(async () => {
@@ -46,6 +53,10 @@ describe('CategoriesController - Comprehensive', () => {
         {
           provide: CategoriesService,
           useValue: mockCategoriesService,
+        },
+        {
+          provide: BulkUploadService,
+          useValue: mockBulkUploadService,
         },
       ],
     }).compile();
@@ -69,11 +80,15 @@ describe('CategoriesController - Comprehensive', () => {
     it('should pass all query parameters to service', async () => {
       await controller.findAll(2, 20, 'electronics');
 
-      expect(service.getAllCategories).toHaveBeenCalledWith(2, 20, 'electronics');
+      expect(service.getAllCategories).toHaveBeenCalledWith(
+        2,
+        20,
+        'electronics',
+      );
     });
 
     it('should handle empty search parameter', async () => {
-      await controller.findAll(1, 10, undefined as any);
+      await controller.findAll(1, 10, undefined);
 
       expect(service.getAllCategories).toHaveBeenCalledWith(1, 10, undefined);
     });
@@ -83,7 +98,9 @@ describe('CategoriesController - Comprehensive', () => {
     it('should pass correct ID to service', async () => {
       await controller.findOne('category-uuid');
 
-      expect(service.getAllCategoriesById).toHaveBeenCalledWith('category-uuid');
+      expect(service.getAllCategoriesById).toHaveBeenCalledWith(
+        'category-uuid',
+      );
     });
 
     it('should handle any ID format (validation at service level)', async () => {
@@ -102,6 +119,7 @@ describe('CategoriesController - Comprehensive', () => {
 
   describe('create - Request Body and File Validation', () => {
     const mockImageFile = { originalname: 'test.jpg' } as Express.Multer.File;
+    const mockImageFiles = [mockImageFile];
 
     it('should successfully create category with image', async () => {
       const dto = {
@@ -109,10 +127,10 @@ describe('CategoriesController - Comprehensive', () => {
         description: 'New description',
       };
 
-      const result = await controller.create(dto as any, mockImageFile);
+      const result = await controller.create(dto, mockImageFiles);
 
       expect(result).toEqual(mockCategory);
-      expect(service.createCategory).toHaveBeenCalledWith(dto, mockImageFile);
+      expect(service.createCategory).toHaveBeenCalledWith(dto, mockImageFiles);
     });
 
     it('should create category without image', async () => {
@@ -121,7 +139,7 @@ describe('CategoriesController - Comprehensive', () => {
         description: 'New description',
       };
 
-      const result = await controller.create(dto as any, undefined);
+      const result = await controller.create(dto, undefined);
 
       expect(result).toEqual(mockCategory);
       expect(service.createCategory).toHaveBeenCalledWith(dto, undefined);
@@ -133,14 +151,14 @@ describe('CategoriesController - Comprehensive', () => {
         description: 'All electronic items',
       };
 
-      await controller.create(dto as any, mockImageFile);
+      await controller.create(dto, mockImageFiles);
 
       expect(service.createCategory).toHaveBeenCalledWith(
         expect.objectContaining({
           name: 'Electronics',
           description: 'All electronic items',
         }),
-        mockImageFile,
+        mockImageFiles,
       );
     });
   });
@@ -151,7 +169,7 @@ describe('CategoriesController - Comprehensive', () => {
     it('should pass correct ID to service', async () => {
       const dto = { name: 'Updated Name' };
 
-      await controller.update('category-uuid', dto as any, undefined);
+      await controller.update('category-uuid', dto, undefined);
 
       expect(service.updateCategory).toHaveBeenCalledWith(
         'category-uuid',
@@ -163,7 +181,7 @@ describe('CategoriesController - Comprehensive', () => {
     it('should handle partial update', async () => {
       const dto = { name: 'Updated Only Name' };
 
-      await controller.update('category-uuid', dto as any, undefined);
+      await controller.update('category-uuid', dto, undefined);
 
       expect(service.updateCategory).toHaveBeenCalledWith(
         'category-uuid',
@@ -175,7 +193,7 @@ describe('CategoriesController - Comprehensive', () => {
     it('should update with new image', async () => {
       const dto = { description: 'Updated description' };
 
-      await controller.update('category-uuid', dto as any, mockImageFile);
+      await controller.update('category-uuid', dto, mockImageFile);
 
       expect(service.updateCategory).toHaveBeenCalledWith(
         'category-uuid',
@@ -188,7 +206,7 @@ describe('CategoriesController - Comprehensive', () => {
       const customId = 'custom-id-format';
       const dto = { name: 'Updated' };
 
-      await controller.update(customId, dto as any, undefined);
+      await controller.update(customId, dto, undefined);
 
       expect(service.updateCategory).toHaveBeenCalledWith(
         customId,

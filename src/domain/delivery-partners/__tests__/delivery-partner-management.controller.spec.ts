@@ -45,7 +45,9 @@ describe('DeliveryPartnerManagementController - Comprehensive', () => {
       limit: 10,
       totalPages: 1,
     }),
-    toggleVerification: jest.fn().mockResolvedValue({ ...mockPartner, isVerified: false }),
+    toggleVerification: jest
+      .fn()
+      .mockResolvedValue({ ...mockPartner, isVerified: false }),
     deletePartner: jest.fn().mockResolvedValue(mockPartner),
   };
 
@@ -60,7 +62,9 @@ describe('DeliveryPartnerManagementController - Comprehensive', () => {
       ],
     }).compile();
 
-    controller = module.get<DeliveryPartnerManagementController>(DeliveryPartnerManagementController);
+    controller = module.get<DeliveryPartnerManagementController>(
+      DeliveryPartnerManagementController,
+    );
     service = module.get(DeliveryPartnerService);
     jest.clearAllMocks();
   });

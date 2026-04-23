@@ -21,7 +21,7 @@ import { MediaModule } from './media/media.module';
     DeliveryPartnersModule,
     SettingsModule,
     NotificationsModule,
-    MediaModule
+    MediaModule,
   ],
 })
-export class DomainModule { }
+export class DomainModule {}

@@ -17,7 +17,9 @@ export class CategoryImage {
   @Column()
   url: string;
 
-  @ManyToOne(() => Category, (category) => category.images, { onDelete: 'CASCADE' })
+  @ManyToOne(() => Category, (category) => category.images, {
+    onDelete: 'CASCADE',
+  })
   @JoinColumn({ name: 'category_id' })
   category: Category;
 

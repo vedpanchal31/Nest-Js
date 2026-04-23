@@ -1,6 +1,9 @@
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication, ValidationPipe, BadRequestException } from '@nestjs/common';
+import {
+  INestApplication,
+  ValidationPipe,
+  BadRequestException,
+} from '@nestjs/common';
 import request from 'supertest';
 import { App } from 'supertest/types';
 import { MediaController } from '../src/domain/media/media.controller';
@@ -33,7 +36,11 @@ describe('MediaController (e2e)', () => {
     updatePublic: jest.fn().mockResolvedValue(mockMedia),
     removePublic: jest.fn().mockResolvedValue(undefined),
     getStatsPublic: jest.fn().mockResolvedValue({ totalFiles: 1 }),
-    getDownloadUrl: jest.fn().mockResolvedValue('https://cloudinary.com/media/images/1234567890-test.png'),
+    getDownloadUrl: jest
+      .fn()
+      .mockResolvedValue(
+        'https://cloudinary.com/media/images/1234567890-test.png',
+      ),
   };
 
   beforeEach(async () => {
@@ -48,7 +55,9 @@ describe('MediaController (e2e)', () => {
     }).compile();
 
     app = moduleFixture.createNestApplication();
-    app.useGlobalPipes(new ValidationPipe({ transform: true, whitelist: true }));
+    app.useGlobalPipes(
+      new ValidationPipe({ transform: true, whitelist: true }),
+    );
     await app.init();
   });
 
@@ -71,16 +80,18 @@ describe('MediaController (e2e)', () => {
     });
 
     it('should return 400 when no files uploaded', async () => {
-      mockMediaService.uploadFilesPublic.mockRejectedValue(new Error('At least one file must be provided'));
+      mockMediaService.uploadFilesPublic.mockRejectedValue(
+        new Error('At least one file must be provided'),
+      );
 
-      await request(app.getHttpServer())
-        .post('/media/upload')
-        .expect(400);
+      await request(app.getHttpServer()).post('/media/upload').expect(400);
     });
 
     it('should handle pathKey parameter', async () => {
       // The pathKey field is passed but validation may fail if pathId is required
-      mockMediaService.uploadFilesPublic.mockRejectedValue(new BadRequestException('pathId is required'));
+      mockMediaService.uploadFilesPublic.mockRejectedValue(
+        new BadRequestException('pathId is required'),
+      );
 
       await request(app.getHttpServer())
         .post('/media/upload')
@@ -112,9 +123,7 @@ describe('MediaController (e2e)', () => {
     });
 
     it('should use default pagination', async () => {
-      await request(app.getHttpServer())
-        .get('/media')
-        .expect(200);
+      await request(app.getHttpServer()).get('/media').expect(200);
 
       expect(mockMediaService.findAllPublic).toHaveBeenCalledWith(
         expect.objectContaining({ page: 1, limit: 20 }),
@@ -132,9 +141,7 @@ describe('MediaController (e2e)', () => {
     });
 
     it('should return 400 for invalid id format', async () => {
-      await request(app.getHttpServer())
-        .get('/media/invalid-uuid')
-        .expect(400);
+      await request(app.getHttpServer()).get('/media/invalid-uuid').expect(400);
     });
   });
 

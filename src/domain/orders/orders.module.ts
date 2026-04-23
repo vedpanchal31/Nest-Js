@@ -12,6 +12,7 @@ import { RolesModule } from '../roles/roles.module';
 import { DeliveryPartnersModule } from '../delivery-partners/delivery-partners.module';
 import { SettingsModule } from '../settings/settings.module';
 import { InvoiceService } from '../../core/services/invoice.service';
+import { ProductsModule } from '../products/products.module';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { InvoiceService } from '../../core/services/invoice.service';
     RolesModule,
     DeliveryPartnersModule,
     SettingsModule,
+    ProductsModule,
     BullModule.registerQueue({
       name: 'notifications',
     }),

@@ -21,7 +21,7 @@ describe('ProductsService - Comprehensive', () => {
   let consoleErrorSpy: jest.SpyInstance;
 
   beforeAll(() => {
-    consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => { });
+    consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
   });
 
   afterAll(() => {
@@ -76,12 +76,18 @@ describe('ProductsService - Comprehensive', () => {
     };
 
     const productImageRepositoryMock = {
-      create: jest.fn().mockReturnValue({ id: 'image-uuid', url: 'http://image.url' }),
-      save: jest.fn().mockResolvedValue({ id: 'image-uuid', url: 'http://image.url' }),
+      create: jest
+        .fn()
+        .mockReturnValue({ id: 'image-uuid', url: 'http://image.url' }),
+      save: jest
+        .fn()
+        .mockResolvedValue({ id: 'image-uuid', url: 'http://image.url' }),
     };
 
     const cloudinaryServiceMock = {
-      uploadImage: jest.fn().mockResolvedValue({ secure_url: 'http://image.url' }),
+      uploadImage: jest
+        .fn()
+        .mockResolvedValue({ secure_url: 'http://image.url' }),
     };
 
     const categoriesServiceMock = {
@@ -140,7 +146,16 @@ describe('ProductsService - Comprehensive', () => {
       };
 
       await expect(
-        service.createProduct({ id: 'supplier-uuid', email: 'supplier@test.com', type: 2, userType: UserType.SUPPLIER }, dto, mockImages),
+        service.createProduct(
+          {
+            id: 'supplier-uuid',
+            email: 'supplier@test.com',
+            type: 2,
+            userType: UserType.SUPPLIER,
+          },
+          dto,
+          mockImages,
+        ),
       ).rejects.toThrow(BadRequestException);
     });
 
@@ -153,7 +168,16 @@ describe('ProductsService - Comprehensive', () => {
       };
 
       await expect(
-        service.createProduct({ id: 'supplier-uuid', email: 'supplier@test.com', type: 2, userType: UserType.SUPPLIER }, dto, mockImages),
+        service.createProduct(
+          {
+            id: 'supplier-uuid',
+            email: 'supplier@test.com',
+            type: 2,
+            userType: UserType.SUPPLIER,
+          },
+          dto,
+          mockImages,
+        ),
       ).rejects.toThrow(BadRequestException);
     });
 
@@ -168,7 +192,16 @@ describe('ProductsService - Comprehensive', () => {
       };
 
       await expect(
-        service.createProduct({ id: 'supplier-uuid', email: 'supplier@test.com', type: 2, userType: UserType.SUPPLIER }, dto, mockImages),
+        service.createProduct(
+          {
+            id: 'supplier-uuid',
+            email: 'supplier@test.com',
+            type: 2,
+            userType: UserType.SUPPLIER,
+          },
+          dto,
+          mockImages,
+        ),
       ).rejects.toThrow(BadRequestException);
     });
 
@@ -184,7 +217,16 @@ describe('ProductsService - Comprehensive', () => {
       };
 
       await expect(
-        service.createProduct({ id: 'supplier-uuid', email: 'supplier@test.com', type: 2, userType: UserType.SUPPLIER }, dto as any, mockImages),
+        service.createProduct(
+          {
+            id: 'supplier-uuid',
+            email: 'supplier@test.com',
+            type: 2,
+            userType: UserType.SUPPLIER,
+          },
+          dto as any,
+          mockImages,
+        ),
       ).rejects.toThrow(BadRequestException);
     });
 
@@ -197,9 +239,9 @@ describe('ProductsService - Comprehensive', () => {
         categoryId: 'category-uuid',
       };
 
-      await expect(service.createProduct(mockAdmin, dto, mockImages)).rejects.toThrow(
-        BadRequestException,
-      );
+      await expect(
+        service.createProduct(mockAdmin, dto, mockImages),
+      ).rejects.toThrow(BadRequestException);
     });
 
     it('should throw BadRequestException when admin provides invalid supplierId', async () => {
@@ -214,14 +256,17 @@ describe('ProductsService - Comprehensive', () => {
         supplierId: 'invalid-supplier',
       };
 
-      await expect(service.createProduct(mockAdmin, dto, mockImages)).rejects.toThrow(
-        BadRequestException,
-      );
+      await expect(
+        service.createProduct(mockAdmin, dto, mockImages),
+      ).rejects.toThrow(BadRequestException);
     });
 
     it('should throw BadRequestException when admin provides non-supplier userId', async () => {
       productsRepository.findOne.mockResolvedValue(null);
-      usersService.findOne.mockResolvedValue({ ...mockSupplier, userType: UserType.USER } as any);
+      usersService.findOne.mockResolvedValue({
+        ...mockSupplier,
+        userType: UserType.USER,
+      } as any);
 
       const dto = {
         name: 'Wireless Mouse',
@@ -231,9 +276,9 @@ describe('ProductsService - Comprehensive', () => {
         supplierId: 'user-id-not-supplier',
       };
 
-      await expect(service.createProduct(mockAdmin, dto, mockImages)).rejects.toThrow(
-        BadRequestException,
-      );
+      await expect(
+        service.createProduct(mockAdmin, dto, mockImages),
+      ).rejects.toThrow(BadRequestException);
     });
 
     it('should successfully create product as supplier', async () => {
@@ -247,7 +292,12 @@ describe('ProductsService - Comprehensive', () => {
       };
 
       const result = await service.createProduct(
-        { id: 'supplier-uuid', email: 'supplier@test.com', type: 2, userType: UserType.SUPPLIER },
+        {
+          id: 'supplier-uuid',
+          email: 'supplier@test.com',
+          type: 2,
+          userType: UserType.SUPPLIER,
+        },
         dto,
         mockImages,
       );
@@ -277,7 +327,9 @@ describe('ProductsService - Comprehensive', () => {
 
     it('should parse price as float correctly', async () => {
       productsRepository.findOne.mockResolvedValue(null);
-      const saveSpy = jest.fn().mockResolvedValue({ ...mockProduct, price: 25.99 });
+      const saveSpy = jest
+        .fn()
+        .mockResolvedValue({ ...mockProduct, price: 25.99 });
       productsRepository.save = saveSpy;
 
       const dto = {
@@ -288,7 +340,12 @@ describe('ProductsService - Comprehensive', () => {
       };
 
       await service.createProduct(
-        { id: 'supplier-uuid', email: 'supplier@test.com', type: 2, userType: UserType.SUPPLIER },
+        {
+          id: 'supplier-uuid',
+          email: 'supplier@test.com',
+          type: 2,
+          userType: UserType.SUPPLIER,
+        },
         dto,
         mockImages,
       );
@@ -353,9 +410,12 @@ describe('ProductsService - Comprehensive', () => {
 
       await service.getProducts(1, 10, undefined, 'category-uuid');
 
-      expect(qbMock.andWhere).toHaveBeenCalledWith('category.id = :categoryId', {
-        categoryId: 'category-uuid',
-      });
+      expect(qbMock.andWhere).toHaveBeenCalledWith(
+        'category.id = :categoryId',
+        {
+          categoryId: 'category-uuid',
+        },
+      );
     });
 
     it('should filter by supplier when user is SUPPLIER', async () => {
@@ -376,9 +436,12 @@ describe('ProductsService - Comprehensive', () => {
         userType: UserType.SUPPLIER,
       });
 
-      expect(qbMock.andWhere).toHaveBeenCalledWith('supplier.id = :supplierId', {
-        supplierId: 'supplier-uuid',
-      });
+      expect(qbMock.andWhere).toHaveBeenCalledWith(
+        'supplier.id = :supplierId',
+        {
+          supplierId: 'supplier-uuid',
+        },
+      );
     });
 
     it('should not filter by supplier when user is ADMIN', async () => {
@@ -410,7 +473,12 @@ describe('ProductsService - Comprehensive', () => {
       await expect(
         service.updateProduct(
           'invalid-id',
-          { id: 'supplier-uuid', email: 'supplier@test.com', type: 2, userType: UserType.SUPPLIER },
+          {
+            id: 'supplier-uuid',
+            email: 'supplier@test.com',
+            type: 2,
+            userType: UserType.SUPPLIER,
+          },
           { name: 'Updated Name' },
           mockImages,
         ),
@@ -426,7 +494,12 @@ describe('ProductsService - Comprehensive', () => {
       await expect(
         service.updateProduct(
           'product-uuid',
-          { id: 'supplier-uuid', email: 'supplier@test.com', type: 2, userType: UserType.SUPPLIER },
+          {
+            id: 'supplier-uuid',
+            email: 'supplier@test.com',
+            type: 2,
+            userType: UserType.SUPPLIER,
+          },
           { name: 'Updated Name' },
           mockImages,
         ),
@@ -439,7 +512,12 @@ describe('ProductsService - Comprehensive', () => {
         supplier: { id: 'different-supplier-uuid' },
       } as any);
 
-      const result = await service.updateProduct('product-uuid', mockAdmin, { name: 'Updated' }, []);
+      const result = await service.updateProduct(
+        'product-uuid',
+        mockAdmin,
+        { name: 'Updated' },
+        [],
+      );
 
       expect(result).toBeDefined();
     });
@@ -451,13 +529,20 @@ describe('ProductsService - Comprehensive', () => {
         description: 'Original Description',
         price: 25.99,
       };
-      productsRepository.findOne.mockResolvedValue(existingProduct as any);
-      const saveSpy = jest.fn().mockResolvedValue({ ...existingProduct, name: 'New Name' });
+      productsRepository.findOne.mockResolvedValue(existingProduct);
+      const saveSpy = jest
+        .fn()
+        .mockResolvedValue({ ...existingProduct, name: 'New Name' });
       productsRepository.save = saveSpy;
 
       await service.updateProduct(
         'product-uuid',
-        { id: 'supplier-uuid', email: 'supplier@test.com', type: 2, userType: UserType.SUPPLIER },
+        {
+          id: 'supplier-uuid',
+          email: 'supplier@test.com',
+          type: 2,
+          userType: UserType.SUPPLIER,
+        },
         { name: 'New Name' },
         [],
       );
@@ -469,13 +554,20 @@ describe('ProductsService - Comprehensive', () => {
     });
 
     it('should parse updated price as float', async () => {
-      productsRepository.findOne.mockResolvedValue(mockProduct as any);
-      const saveSpy = jest.fn().mockResolvedValue({ ...mockProduct, price: 29.99 });
+      productsRepository.findOne.mockResolvedValue(mockProduct);
+      const saveSpy = jest
+        .fn()
+        .mockResolvedValue({ ...mockProduct, price: 29.99 });
       productsRepository.save = saveSpy;
 
       await service.updateProduct(
         'product-uuid',
-        { id: 'supplier-uuid', email: 'supplier@test.com', type: 2, userType: UserType.SUPPLIER },
+        {
+          id: 'supplier-uuid',
+          email: 'supplier@test.com',
+          type: 2,
+          userType: UserType.SUPPLIER,
+        },
         { price: '29.99' },
         [],
       );
@@ -516,7 +608,7 @@ describe('ProductsService - Comprehensive', () => {
     });
 
     it('should allow supplier to delete their own product', async () => {
-      productsRepository.findOne.mockResolvedValue(mockProduct as any);
+      productsRepository.findOne.mockResolvedValue(mockProduct);
 
       const result = await service.deleteProduct('product-uuid', {
         id: 'supplier-uuid',
@@ -542,7 +634,7 @@ describe('ProductsService - Comprehensive', () => {
     });
 
     it('should return correct response structure on delete', async () => {
-      productsRepository.findOne.mockResolvedValue(mockProduct as any);
+      productsRepository.findOne.mockResolvedValue(mockProduct);
 
       const result = await service.deleteProduct('product-uuid', {
         id: 'supplier-uuid',

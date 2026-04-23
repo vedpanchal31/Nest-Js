@@ -17,7 +17,7 @@ interface NotificationJobData {
 export class NotificationsProcessor {
   private readonly logger = new Logger(NotificationsProcessor.name);
 
-  constructor(private readonly notificationsService: NotificationsService) { }
+  constructor(private readonly notificationsService: NotificationsService) {}
 
   @Process('send-notification')
   async handleSendNotification(job: Job<NotificationJobData>) {
@@ -47,7 +47,9 @@ export class NotificationsProcessor {
   }
 
   @Process('welcome-notification')
-  async handleWelcomeNotification(job: Job<{ userId: string; userName: string }>) {
+  async handleWelcomeNotification(
+    job: Job<{ userId: string; userName: string }>,
+  ) {
     const { userId, userName } = job.data;
 
     try {

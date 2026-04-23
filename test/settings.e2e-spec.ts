@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ValidationPipe, CanActivate } from '@nestjs/common';
 import request from 'supertest';
@@ -20,7 +19,8 @@ describe('SettingsController (e2e)', () => {
     email: 'contact@velora.com',
     phone: '+1 (555) 123-4567',
     website: 'https://velora.com',
-    logoUrl: 'https://res.cloudinary.com/dcegoonge/image/upload/v1774418520/company-logo/logo.png',
+    logoUrl:
+      'https://res.cloudinary.com/dcegoonge/image/upload/v1774418520/company-logo/logo.png',
     updatedAt: new Date().toISOString(),
   };
 
@@ -31,13 +31,15 @@ describe('SettingsController (e2e)', () => {
     }),
     uploadCompanyLogo: jest.fn().mockResolvedValue({
       message: 'Company logo uploaded successfully',
-      logoUrl: 'https://res.cloudinary.com/dcegoonge/image/upload/v1774418520/company-logo/new-logo.png',
+      logoUrl:
+        'https://res.cloudinary.com/dcegoonge/image/upload/v1774418520/company-logo/new-logo.png',
       publicId: 'company-logo/new-logo',
       updatedAt: new Date().toISOString(),
     }),
     updateCompanyLogo: jest.fn().mockResolvedValue({
       message: 'Company logo updated successfully',
-      logoUrl: 'https://res.cloudinary.com/dcegoonge/image/upload/v1774418520/company-logo/updated-logo.png',
+      logoUrl:
+        'https://res.cloudinary.com/dcegoonge/image/upload/v1774418520/company-logo/updated-logo.png',
       publicId: 'company-logo/updated-logo',
       updatedAt: new Date().toISOString(),
     }),
@@ -94,7 +96,9 @@ describe('SettingsController (e2e)', () => {
       .compile();
 
     app = moduleFixture.createNestApplication();
-    app.useGlobalPipes(new ValidationPipe({ transform: true, whitelist: true }));
+    app.useGlobalPipes(
+      new ValidationPipe({ transform: true, whitelist: true }),
+    );
     await app.init();
   });
 
@@ -125,13 +129,18 @@ describe('SettingsController (e2e)', () => {
         .attach('logo', Buffer.from('test-image'), 'logo.png')
         .expect(201);
 
-      expect(response.body).toHaveProperty('message', 'Company logo uploaded successfully');
+      expect(response.body).toHaveProperty(
+        'message',
+        'Company logo uploaded successfully',
+      );
       expect(response.body).toHaveProperty('logoUrl');
       expect(response.body).toHaveProperty('publicId');
     });
 
     it('should return 500 when no file uploaded', async () => {
-      mockSettingsService.uploadCompanyLogo.mockRejectedValue(new Error('No file uploaded'));
+      mockSettingsService.uploadCompanyLogo.mockRejectedValue(
+        new Error('No file uploaded'),
+      );
 
       await request(app.getHttpServer())
         .post('/settings/company-logo')
@@ -148,7 +157,10 @@ describe('SettingsController (e2e)', () => {
         .attach('logo', Buffer.from('new-logo'), 'new-logo.png')
         .expect(200);
 
-      expect(response.body).toHaveProperty('message', 'Company logo updated successfully');
+      expect(response.body).toHaveProperty(
+        'message',
+        'Company logo updated successfully',
+      );
       expect(response.body).toHaveProperty('logoUrl');
       expect(response.body).toHaveProperty('publicId');
     });
@@ -179,7 +191,10 @@ describe('SettingsController (e2e)', () => {
         .send({ name: 'New Company Name' })
         .expect(200);
 
-      expect(response.body).toHaveProperty('message', 'Company information updated successfully');
+      expect(response.body).toHaveProperty(
+        'message',
+        'Company information updated successfully',
+      );
       expect(response.body).toHaveProperty('data');
     });
 
@@ -196,7 +211,9 @@ describe('SettingsController (e2e)', () => {
         .send(updateData)
         .expect(200);
 
-      expect(mockSettingsService.updateCompanyInfo).toHaveBeenCalledWith(updateData);
+      expect(mockSettingsService.updateCompanyInfo).toHaveBeenCalledWith(
+        updateData,
+      );
       expect(response.body.data.name).toBe('Updated Company Name');
     });
 
@@ -207,7 +224,9 @@ describe('SettingsController (e2e)', () => {
         .send({ tagline: 'New Tagline' })
         .expect(200);
 
-      expect(mockSettingsService.updateCompanyInfo).toHaveBeenCalledWith({ tagline: 'New Tagline' });
+      expect(mockSettingsService.updateCompanyInfo).toHaveBeenCalledWith({
+        tagline: 'New Tagline',
+      });
     });
 
     it('should update address (admin)', async () => {
@@ -217,7 +236,9 @@ describe('SettingsController (e2e)', () => {
         .send({ address: 'New Address' })
         .expect(200);
 
-      expect(mockSettingsService.updateCompanyInfo).toHaveBeenCalledWith({ address: 'New Address' });
+      expect(mockSettingsService.updateCompanyInfo).toHaveBeenCalledWith({
+        address: 'New Address',
+      });
     });
 
     it('should update website (admin)', async () => {
@@ -227,7 +248,9 @@ describe('SettingsController (e2e)', () => {
         .send({ website: 'https://newsite.com' })
         .expect(200);
 
-      expect(mockSettingsService.updateCompanyInfo).toHaveBeenCalledWith({ website: 'https://newsite.com' });
+      expect(mockSettingsService.updateCompanyInfo).toHaveBeenCalledWith({
+        website: 'https://newsite.com',
+      });
     });
   });
 });

@@ -2,6 +2,12 @@ import { DataSource } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { User } from '../../domain/users/entities/user.entity';
 import { Profile } from '../../domain/users/entities/profile.entity';
+import { Role } from '../../domain/roles/entities/role.entity';
+import { Permission } from '../../domain/roles/entities/permission.entity';
+import { Product } from '../../domain/products/entities/product.entity';
+import { ProductImage } from '../../domain/products/entities/product-image.entity';
+import { Category } from '../../domain/categories/entities/category.entity';
+import { CategoryImage } from '../../domain/categories/entities/category-image.entity';
 import { UserType } from '../../core/constants/app.constants';
 import { config } from 'dotenv';
 
@@ -16,7 +22,16 @@ async function runSeeder() {
     username: process.env.DB_USERNAME,
     password: process.env.DB_PASSWORD,
     database: process.env.DB_NAME,
-    entities: [User, Profile],
+    entities: [
+      User,
+      Profile,
+      Role,
+      Permission,
+      Product,
+      ProductImage,
+      Category,
+      CategoryImage,
+    ],
     synchronize: false,
   });
 

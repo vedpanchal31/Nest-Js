@@ -5,8 +5,14 @@ export class RemoveProductCategoriesTable1775041500000 implements MigrationInter
 
   public async up(queryRunner: QueryRunner): Promise<void> {
     // Drop indexes first
-    await queryRunner.dropIndex('product_categories', 'IDX_PRODUCT_CATEGORIES_CATEGORY_ID');
-    await queryRunner.dropIndex('product_categories', 'IDX_PRODUCT_CATEGORIES_PRODUCT_ID');
+    await queryRunner.dropIndex(
+      'product_categories',
+      'IDX_PRODUCT_CATEGORIES_CATEGORY_ID',
+    );
+    await queryRunner.dropIndex(
+      'product_categories',
+      'IDX_PRODUCT_CATEGORIES_PRODUCT_ID',
+    );
     await queryRunner.dropIndex('product_categories', 'PK_PRODUCT_CATEGORIES');
 
     // Drop the product_categories table

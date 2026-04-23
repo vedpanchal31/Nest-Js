@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import request from 'supertest';
@@ -99,7 +98,9 @@ describe('AuthController (e2e)', () => {
     }).compile();
 
     app = moduleFixture.createNestApplication();
-    app.useGlobalPipes(new ValidationPipe({ transform: true, whitelist: true }));
+    app.useGlobalPipes(
+      new ValidationPipe({ transform: true, whitelist: true }),
+    );
     await app.init();
   });
 
@@ -196,7 +197,10 @@ describe('AuthController (e2e)', () => {
     it('should verify email OTP successfully', async () => {
       mockUsersRepository.findOne.mockResolvedValue(mockUser);
       mockCacheManager.get.mockResolvedValue('123456');
-      mockUsersRepository.save.mockResolvedValue({ ...mockUser, isEmailVerified: true });
+      mockUsersRepository.save.mockResolvedValue({
+        ...mockUser,
+        isEmailVerified: true,
+      });
 
       const response = await request(app.getHttpServer())
         .post('/auth/verify-otp')

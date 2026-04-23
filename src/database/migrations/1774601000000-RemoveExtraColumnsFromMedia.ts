@@ -1,8 +1,6 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class RemoveExtraColumnsFromMedia1774601000000
-  implements MigrationInterface
-{
+export class RemoveExtraColumnsFromMedia1774601000000 implements MigrationInterface {
   name = 'RemoveExtraColumnsFromMedia1774601000000';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
@@ -54,7 +52,9 @@ export class RemoveExtraColumnsFromMedia1774601000000
     await queryRunner.query(
       `ALTER TABLE "media" ADD "is_active" boolean NOT NULL DEFAULT true`,
     );
-    await queryRunner.query(`CREATE INDEX "IDX_media_type" ON "media" ("type")`);
+    await queryRunner.query(
+      `CREATE INDEX "IDX_media_type" ON "media" ("type")`,
+    );
     await queryRunner.query(
       `CREATE INDEX "IDX_media_uploaded_by_id" ON "media" ("uploaded_by_id")`,
     );

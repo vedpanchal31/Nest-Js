@@ -8,10 +8,7 @@ import { Brackets, Repository } from 'typeorm';
 import { Product } from './entities/product.entity';
 import { ProductImage } from './entities/product-image.entity';
 import { CreateProductDto } from './dtos/create-product.dto';
-import {
-  CloudinaryService,
-  MulterFile,
-} from 'src/core/cloudinary/cloudinary.service';
+import { CloudinaryService } from 'src/core/cloudinary/cloudinary.service';
 import { UploadApiResponse } from 'cloudinary';
 import { User } from 'src/domain/users/entities/user.entity';
 import { ITokenPayload } from 'src/core/constants/interfaces/common';
@@ -20,10 +17,27 @@ import { Category } from 'src/domain/categories/entities/category.entity';
 import { CategoriesService } from 'src/domain/categories/categories.service';
 import { UsersService } from '../users/users.service';
 import { UpdateProductDto } from './dtos/update-product.dto';
-import { BulkUploadService, BulkUploadResult, ParsedRow } from 'src/core/bulk-upload/bulk-upload.service';
+import { UpdateStockDto } from './dtos/update-stock.dto';
+import {
+  BulkUploadService,
+  BulkUploadResult,
+  ParsedRow,
+} from 'src/core/bulk-upload/bulk-upload.service';
 
 @Injectable()
 export class ProductsService {
+  private getRowTextValue(value: unknown): string {
+    if (
+      typeof value === 'string' ||
+      typeof value === 'number' ||
+      typeof value === 'boolean'
+    ) {
+      return String(value).trim();
+    }
+
+    return '';
+  }
+
   constructor(
     @InjectRepository(Product)
     private readonly productsRepository: Repository<Product>,
@@ -33,7 +47,7 @@ export class ProductsService {
     private readonly categoriesService: CategoriesService,
     private readonly usersService: UsersService,
     private readonly bulkUploadService: BulkUploadService,
-  ) { }
+  ) {}
 
   async createProduct(
     user: ITokenPayload,
@@ -82,7 +96,9 @@ export class ProductsService {
       }
 
       // Validation: Check if category exists
-      const category = await this.categoriesService.getAllCategoriesById(dto.categoryId);
+      const category = await this.categoriesService.getAllCategoriesById(
+        dto.categoryId,
+      );
       if (!category) {
         throw new BadRequestException('Category not found');
       }
@@ -92,11 +108,15 @@ export class ProductsService {
         name: dto.name,
         description: dto.description,
         price: parseFloat(dto.price),
+        stockQuantity: dto.stockQuantity || 0,
+        minStockThreshold: dto.minStockThreshold || 10,
+        reorderLevel: dto.reorderLevel || 20,
+        isAvailable: dto.isAvailable !== undefined ? dto.isAvailable : true,
         supplier: { id: supplierId } as User,
         category: { id: dto.categoryId } as Category,
       });
 
-      const savedProduct = await this.productsRepository.save(product) as unknown as Product;
+      const savedProduct = await this.productsRepository.save(product);
 
       // Upload images if provided
       if (images && images.length > 0) {
@@ -218,6 +238,18 @@ export class ProductsService {
     if (dto.categoryId) {
       product.category = { id: dto.categoryId } as Category;
     }
+    if (dto.stockQuantity !== undefined) {
+      product.stockQuantity = dto.stockQuantity;
+    }
+    if (dto.minStockThreshold !== undefined) {
+      product.minStockThreshold = dto.minStockThreshold;
+    }
+    if (dto.reorderLevel !== undefined) {
+      product.reorderLevel = dto.reorderLevel;
+    }
+    if (dto.isAvailable !== undefined) {
+      product.isAvailable = dto.isAvailable;
+    }
 
     const savedProduct = await this.productsRepository.save(product);
 
@@ -275,12 +307,22 @@ export class ProductsService {
   }
 
   async getAllSupplierEmails(): Promise<string[]> {
-    const suppliers = await this.usersService.getAllUsers(1, 1000, undefined, UserType.SUPPLIER);
+    const suppliers = await this.usersService.getAllUsers(
+      1,
+      1000,
+      undefined,
+      UserType.SUPPLIER,
+    );
     return suppliers.users.map((u) => u.email);
   }
 
   async getAllSupplierNames(): Promise<string[]> {
-    const suppliers = await this.usersService.getAllUsers(1, 1000, undefined, UserType.SUPPLIER);
+    const suppliers = await this.usersService.getAllUsers(
+      1,
+      1000,
+      undefined,
+      UserType.SUPPLIER,
+    );
     return suppliers.users.map((u) => u.name);
   }
 
@@ -302,7 +344,10 @@ export class ProductsService {
     // Parse Excel file
     let rows: ParsedRow[];
     try {
-      rows = await this.bulkUploadService.parseExcelFile(excelBuffer, expectedColumns);
+      rows = await this.bulkUploadService.parseExcelFile(
+        excelBuffer,
+        expectedColumns,
+      );
     } catch (error) {
       throw new BadRequestException(
         `Failed to parse Excel file: ${error instanceof Error ? error.message : 'Unknown error'}`,
@@ -318,7 +363,13 @@ export class ProductsService {
       ? this.bulkUploadService.extractImagesFromZip(zipBuffer)
       : new Map<string, Buffer>();
 
-    const errors: Array<{ row: number; column: string; field: string; value: unknown; message: string }> = [];
+    const errors: Array<{
+      row: number;
+      column: string;
+      field: string;
+      value: unknown;
+      message: string;
+    }> = [];
 
     // Create column mapping (A, B, C, etc.)
     const columnMap: Record<string, string> = {};
@@ -327,14 +378,22 @@ export class ProductsService {
     });
 
     // Get all categories for name-to-id mapping
-    const categoriesData = await this.categoriesService.getAllCategories(1, 1000);
+    const categoriesData = await this.categoriesService.getAllCategories(
+      1,
+      1000,
+    );
     const categoryMap = new Map<string, string>();
     categoriesData.data.forEach((c) => categoryMap.set(c.name, c.id));
 
     // Get all suppliers for name-to-id mapping (for ADMIN)
-    let supplierMap = new Map<string, string>();
+    const supplierMap = new Map<string, string>();
     if (isAdmin) {
-      const suppliersData = await this.usersService.getAllUsers(1, 1000, undefined, UserType.SUPPLIER);
+      const suppliersData = await this.usersService.getAllUsers(
+        1,
+        1000,
+        undefined,
+        UserType.SUPPLIER,
+      );
       suppliersData.users.forEach((u) => supplierMap.set(u.name, u.id));
     }
 
@@ -353,7 +412,10 @@ export class ProductsService {
       let hasRowError = false;
 
       // Validate required fields
-      const rowErrors = this.bulkUploadService.validateRequiredFields(row, requiredFields);
+      const rowErrors = this.bulkUploadService.validateRequiredFields(
+        row,
+        requiredFields,
+      );
       if (rowErrors.length > 0) {
         rowErrors.forEach((err) => {
           errors.push({
@@ -368,16 +430,16 @@ export class ProductsService {
       }
 
       // New column order: Category (1), Supplier (2 - admin only), Name, Description, Price, Images
-      const categoryName = String(row.data['Category*'] || '').trim();
-      const name = String(row.data['Name*'] || '').trim();
-      const description = String(row.data['Description*'] || '').trim();
+      const categoryName = this.getRowTextValue(row.data['Category*']);
+      const name = this.getRowTextValue(row.data['Name*']);
+      const description = this.getRowTextValue(row.data['Description*']);
       const priceRaw = row.data['Price*'];
-      const imagesRaw = row.data['Images'] ? String(row.data['Images']).trim() : '';
+      const imagesRaw = this.getRowTextValue(row.data['Images']);
 
       // Determine and validate supplier ID
       let supplierId: string | null = null;
       if (isAdmin) {
-        const supplierName = String(row.data['Supplier*'] || '').trim();
+        const supplierName = this.getRowTextValue(row.data['Supplier*']);
         if (!supplierName) {
           errors.push({
             row: row.rowNumber,
@@ -431,7 +493,7 @@ export class ProductsService {
         });
         hasRowError = true;
       } else {
-        price = parseFloat(String(priceRaw));
+        price = parseFloat(this.getRowTextValue(priceRaw));
         if (isNaN(price) || price <= 0) {
           errors.push({
             row: row.rowNumber,
@@ -474,7 +536,10 @@ export class ProductsService {
 
       // Validate images exist in ZIP (if images are specified)
       if (imageNames.length > 0) {
-        const { unmatched } = this.bulkUploadService.matchImages(imageNames, zipImages);
+        const { unmatched } = this.bulkUploadService.matchImages(
+          imageNames,
+          zipImages,
+        );
         for (const unmatchedName of unmatched) {
           errors.push({
             row: row.rowNumber,
@@ -505,7 +570,8 @@ export class ProductsService {
     if (errors.length > 0) {
       return {
         success: false,
-        message: 'Failed to create products. Please fix the errors and try again.',
+        message:
+          'Failed to create products. Please fix the errors and try again.',
         totalRows: rows.length,
         successCount: 0,
         errorCount: errors.length,
@@ -531,7 +597,10 @@ export class ProductsService {
 
         // Upload images if provided
         if (validRow.imageNames.length > 0) {
-          const { matched } = this.bulkUploadService.matchImages(validRow.imageNames, zipImages);
+          const { matched } = this.bulkUploadService.matchImages(
+            validRow.imageNames,
+            zipImages,
+          );
 
           for (const [imageName, imageBuffer] of matched) {
             try {
@@ -599,5 +668,122 @@ export class ProductsService {
       errors,
       data: productsWithImages,
     };
+  }
+
+  async updateProductStock(
+    productId: string,
+    user: ITokenPayload,
+    dto: UpdateStockDto,
+  ) {
+    const product = await this.productsRepository.findOne({
+      where: { id: productId },
+      relations: ['supplier'],
+    });
+
+    if (!product) {
+      throw new BadRequestException('Product not found');
+    }
+
+    if (
+      user.userType === UserType.SUPPLIER &&
+      product.supplier.id !== user.id
+    ) {
+      throw new BadRequestException(
+        'You are not authorized to update this product stock',
+      );
+    }
+
+    product.stockQuantity = dto.stockQuantity;
+    if (dto.minStockThreshold !== undefined) {
+      product.minStockThreshold = dto.minStockThreshold;
+    }
+    if (dto.reorderLevel !== undefined) {
+      product.reorderLevel = dto.reorderLevel;
+    }
+
+    const savedProduct = await this.productsRepository.save(product);
+
+    return {
+      message: 'Stock updated successfully',
+      product: savedProduct,
+      needsReorder: savedProduct.stockQuantity <= savedProduct.reorderLevel,
+      isLowStock: savedProduct.stockQuantity <= savedProduct.minStockThreshold,
+    };
+  }
+
+  async checkStockAvailability(productId: string, quantity: number) {
+    const product = await this.productsRepository.findOne({
+      where: { id: productId },
+    });
+
+    if (!product) {
+      throw new BadRequestException('Product not found');
+    }
+
+    if (!product.isAvailable) {
+      throw new BadRequestException('Product is currently not available');
+    }
+
+    if (product.stockQuantity < quantity) {
+      throw new BadRequestException(
+        `Insufficient stock. Only ${product.stockQuantity} units available`,
+      );
+    }
+
+    return true;
+  }
+
+  async decreaseStock(productId: string, quantity: number) {
+    const product = await this.productsRepository.findOne({
+      where: { id: productId },
+    });
+
+    if (!product) {
+      throw new BadRequestException('Product not found');
+    }
+
+    if (product.stockQuantity < quantity) {
+      throw new BadRequestException('Insufficient stock');
+    }
+
+    product.stockQuantity -= quantity;
+
+    if (product.stockQuantity === 0) {
+      product.isAvailable = false;
+    }
+
+    return await this.productsRepository.save(product);
+  }
+
+  async increaseStock(productId: string, quantity: number) {
+    const product = await this.productsRepository.findOne({
+      where: { id: productId },
+    });
+
+    if (!product) {
+      throw new BadRequestException('Product not found');
+    }
+
+    product.stockQuantity += quantity;
+
+    if (product.stockQuantity > 0 && !product.isAvailable) {
+      product.isAvailable = true;
+    }
+
+    return await this.productsRepository.save(product);
+  }
+
+  async getLowStockProducts(supplierId?: string) {
+    const query = this.productsRepository
+      .createQueryBuilder('product')
+      .leftJoinAndSelect('product.supplier', 'supplier')
+      .leftJoinAndSelect('product.category', 'category')
+      .where('product.stockQuantity <= product.minStockThreshold');
+
+    if (supplierId) {
+      query.andWhere('supplier.id = :supplierId', { supplierId });
+    }
+
+    return await query.getMany();
   }
 }

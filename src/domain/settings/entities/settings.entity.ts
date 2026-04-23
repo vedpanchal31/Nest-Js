@@ -1,4 +1,10 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  UpdateDateColumn,
+} from 'typeorm';
 
 @Entity('settings')
 export class Settings {
@@ -23,8 +29,9 @@ export class Settings {
   @Column({ default: 'https://velora.com' })
   website: string;
 
-  @Column({ 
-    default: 'https://res.cloudinary.com/dcegoonge/image/upload/v1774418520/company-logo/hugpvjg6op8enixjsrhk.png' 
+  @Column({
+    default:
+      'https://res.cloudinary.com/dcegoonge/image/upload/v1774418520/company-logo/hugpvjg6op8enixjsrhk.png',
   })
   logoUrl: string;
 

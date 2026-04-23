@@ -44,7 +44,7 @@ export class DeliveryPartnerService {
     private readonly cloudinaryService: CloudinaryService,
 
     private readonly dataSource: DataSource,
-  ) { }
+  ) {}
 
   async register(dto: RegisterDeliveryPartnerDto, file?: MulterFile) {
     const {

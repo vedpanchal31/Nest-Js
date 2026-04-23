@@ -34,7 +34,13 @@ export class EmailTemplateService {
 
   constructor() {
     // Use src folder path since templates aren't copied to dist during build
-    this.templatesDir = path.join(process.cwd(), 'src', 'core', 'mailer', 'templates');
+    this.templatesDir = path.join(
+      process.cwd(),
+      'src',
+      'core',
+      'mailer',
+      'templates',
+    );
   }
 
   private loadTemplate(templateName: string): string {
@@ -45,7 +51,10 @@ export class EmailTemplateService {
     return content;
   }
 
-  private interpolateTemplate(template: string, data: Record<string, string>): string {
+  private interpolateTemplate(
+    template: string,
+    data: Record<string, string>,
+  ): string {
     return template.replace(/\{\{(\w+)\}\}/g, (match, key) => {
       return data[key] !== undefined ? data[key] : match;
     });
@@ -55,7 +64,8 @@ export class EmailTemplateService {
     return {
       companyName: 'Velora',
       tagline: 'Premium E-Commerce Solutions',
-      logoUrl: 'https://res.cloudinary.com/dcegoonge/image/upload/v1774418520/company-logo/hugpvjg6op8enixjsrhk.png',
+      logoUrl:
+        'https://res.cloudinary.com/dcegoonge/image/upload/v1774418520/company-logo/hugpvjg6op8enixjsrhk.png',
       address: '123 Business Avenue, New York, NY 10001',
       email: 'contact@velora.com',
       phone: '+1 (555) 123-4567',
@@ -64,7 +74,10 @@ export class EmailTemplateService {
     };
   }
 
-  renderOtpEmail(data: OtpEmailData & { userName?: string }): { html: string; subject: string } {
+  renderOtpEmail(data: OtpEmailData & { userName?: string }): {
+    html: string;
+    subject: string;
+  } {
     const template = this.loadTemplate('otp-email');
     const branding = this.getDefaultBranding();
 
@@ -82,7 +95,7 @@ export class EmailTemplateService {
       ...otpData,
     };
 
-    const html = this.interpolateTemplate(template, mergedData as Record<string, string>);
+    const html = this.interpolateTemplate(template, mergedData);
 
     return {
       html,
@@ -90,7 +103,10 @@ export class EmailTemplateService {
     };
   }
 
-  renderPasswordResetEmail(data: PasswordResetEmailData): { html: string; subject: string } {
+  renderPasswordResetEmail(data: PasswordResetEmailData): {
+    html: string;
+    subject: string;
+  } {
     const template = this.loadTemplate('password-reset-email');
     const branding = this.getDefaultBranding();
 
@@ -108,7 +124,7 @@ export class EmailTemplateService {
       ...otpData,
     };
 
-    const html = this.interpolateTemplate(template, mergedData as Record<string, string>);
+    const html = this.interpolateTemplate(template, mergedData);
 
     return {
       html,

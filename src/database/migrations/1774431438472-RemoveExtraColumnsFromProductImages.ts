@@ -6,10 +6,10 @@ export class RemoveExtraColumnsFromProductImages1774431438472 implements Migrati
   public async up(queryRunner: QueryRunner): Promise<void> {
     // Drop alt column
     await queryRunner.dropColumn('product_images', 'alt');
-    
+
     // Drop display_order column
     await queryRunner.dropColumn('product_images', 'display_order');
-    
+
     // Drop is_active column
     await queryRunner.dropColumn('product_images', 'is_active');
   }
@@ -24,7 +24,7 @@ export class RemoveExtraColumnsFromProductImages1774431438472 implements Migrati
         isNullable: true,
       }),
     );
-    
+
     await queryRunner.addColumn(
       'product_images',
       new TableColumn({
@@ -33,7 +33,7 @@ export class RemoveExtraColumnsFromProductImages1774431438472 implements Migrati
         default: 0,
       }),
     );
-    
+
     await queryRunner.addColumn(
       'product_images',
       new TableColumn({

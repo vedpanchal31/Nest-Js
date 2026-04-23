@@ -1,7 +1,10 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { RolesController, PermissionsController } from '../roles.controller';
 import { RolesService } from '../roles.service';
-import { UserType, PermissionType } from '../../../core/constants/app.constants';
+import {
+  UserType,
+  PermissionType,
+} from '../../../core/constants/app.constants';
 import { AuthGuard } from '../../../core/guards/auth.guard';
 import { RoleGuard } from '../../../core/guards/role.guard';
 
@@ -37,8 +40,12 @@ describe('RolesController - Comprehensive', () => {
     updateRole: jest.fn().mockResolvedValue({ ...mockRole, name: 'Updated' }),
     deleteRole: jest.fn().mockResolvedValue(mockRole),
     getPermissionsByRoleId: jest.fn().mockResolvedValue([]),
-    updateRolePermissions: jest.fn().mockResolvedValue({ ...mockRole, permissions: [] }),
-    assignRoleToUser: jest.fn().mockResolvedValue({ id: 'user-uuid', roles: [mockRole] }),
+    updateRolePermissions: jest
+      .fn()
+      .mockResolvedValue({ ...mockRole, permissions: [] }),
+    assignRoleToUser: jest
+      .fn()
+      .mockResolvedValue({ id: 'user-uuid', roles: [mockRole] }),
     getAllPermissions: jest.fn().mockResolvedValue([]),
   };
 
@@ -75,16 +82,21 @@ describe('RolesController - Comprehensive', () => {
     it('should create role with valid data', async () => {
       const dto = { name: 'New Role', description: 'Description', type: 1 };
 
-      const result = await controller.createRole(dto as any);
+      const result = await controller.createRole(dto);
 
       expect(service.createRole).toHaveBeenCalledWith(dto);
       expect(result).toEqual(mockRole);
     });
 
     it('should create role with userId', async () => {
-      const dto = { name: 'New Role', description: 'Description', type: 1, userId: 'creator-uuid' };
+      const dto = {
+        name: 'New Role',
+        description: 'Description',
+        type: 1,
+        userId: 'creator-uuid',
+      };
 
-      await controller.createRole(dto as any);
+      await controller.createRole(dto);
 
       expect(service.createRole).toHaveBeenCalledWith(dto);
     });
@@ -94,7 +106,7 @@ describe('RolesController - Comprehensive', () => {
     it('should update role by id', async () => {
       const dto = { name: 'Updated Name' };
 
-      const result = await controller.updateRole('role-uuid', dto as any);
+      const result = await controller.updateRole('role-uuid', dto);
 
       expect(service.updateRole).toHaveBeenCalledWith('role-uuid', dto);
       expect(result.name).toBe('Updated');
@@ -102,9 +114,11 @@ describe('RolesController - Comprehensive', () => {
 
     it('should handle any id format', async () => {
       const customId = 'custom-role-id';
-      await controller.updateRole(customId, { name: 'Updated' } as any);
+      await controller.updateRole(customId, { name: 'Updated' });
 
-      expect(service.updateRole).toHaveBeenCalledWith(customId, { name: 'Updated' });
+      expect(service.updateRole).toHaveBeenCalledWith(customId, {
+        name: 'Updated',
+      });
     });
   });
 
@@ -121,7 +135,7 @@ describe('RolesController - Comprehensive', () => {
     it('should assign role to user', async () => {
       const dto = { userId: 'user-uuid', roleId: 'role-uuid' };
 
-      const result = await controller.assignRole(dto as any);
+      const result = await controller.assignRole(dto);
 
       expect(service.assignRoleToUser).toHaveBeenCalledWith(dto);
       expect(result).toHaveProperty('roles');
@@ -141,9 +155,12 @@ describe('RolesController - Comprehensive', () => {
     it('should update role permissions', async () => {
       const dto = { permissions: [PermissionType.CREATE_CATEGORY] };
 
-      const result = await controller.updateRolePermissions('role-uuid', dto as any);
+      const result = await controller.updateRolePermissions('role-uuid', dto);
 
-      expect(service.updateRolePermissions).toHaveBeenCalledWith('role-uuid', dto);
+      expect(service.updateRolePermissions).toHaveBeenCalledWith(
+        'role-uuid',
+        dto,
+      );
     });
   });
 });
@@ -153,7 +170,9 @@ describe('PermissionsController - Comprehensive', () => {
   let service: jest.Mocked<RolesService>;
 
   const mockRolesService = {
-    getAllPermissions: jest.fn().mockResolvedValue([{ id: 'perm-uuid', name: 'CREATE_CATEGORY' }]),
+    getAllPermissions: jest
+      .fn()
+      .mockResolvedValue([{ id: 'perm-uuid', name: 'CREATE_CATEGORY' }]),
   };
 
   beforeEach(async () => {

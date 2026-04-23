@@ -8,15 +8,15 @@ import { Notification } from './entities/notification.entity';
 import { AuthModule } from '../auth/auth.module';
 
 @Module({
-    imports: [
-        TypeOrmModule.forFeature([Notification]),
-        BullModule.registerQueue({
-            name: 'notifications',
-        }),
-        AuthModule,
-    ],
-    controllers: [NotificationsController],
-    providers: [NotificationsService, NotificationsProcessor],
-    exports: [NotificationsService],
+  imports: [
+    TypeOrmModule.forFeature([Notification]),
+    BullModule.registerQueue({
+      name: 'notifications',
+    }),
+    AuthModule,
+  ],
+  controllers: [NotificationsController],
+  providers: [NotificationsService, NotificationsProcessor],
+  exports: [NotificationsService],
 })
-export class NotificationsModule { }
+export class NotificationsModule {}

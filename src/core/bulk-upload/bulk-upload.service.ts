@@ -33,6 +33,18 @@ export interface ParsedRow {
 
 @Injectable()
 export class BulkUploadService {
+  private getCellText(value: ExcelJS.CellValue | undefined): string {
+    if (
+      typeof value === 'string' ||
+      typeof value === 'number' ||
+      typeof value === 'boolean'
+    ) {
+      return String(value).trim();
+    }
+
+    return '';
+  }
+
   /**
    * Generate a sample Excel file with optional dropdowns
    */
@@ -63,7 +75,8 @@ export class BulkUploadService {
       if (col.dropdown && col.dropdown.length > 0) {
         instruction += 'Select from dropdown.';
       } else if (col.key === 'image' || col.key === 'images') {
-        instruction += 'Enter filename (e.g., image.jpg). Must match file in ZIP.';
+        instruction +=
+          'Enter filename (e.g., image.jpg). Must match file in ZIP.';
       } else if (col.key === 'price') {
         instruction += 'Enter numeric value (e.g., 29.99).';
       } else if (col.key === 'category') {
@@ -119,12 +132,20 @@ export class BulkUploadService {
 
         // Apply data validation to the main column (data starts from row 3)
         const lastRow = 1002; // Allow up to 1000 data rows
-        (worksheet as unknown as { dataValidations: { add: (range: string, validation: ExcelJS.DataValidation) => void } }).dataValidations.add(
+        (
+          worksheet as unknown as {
+            dataValidations: {
+              add: (range: string, validation: ExcelJS.DataValidation) => void;
+            };
+          }
+        ).dataValidations.add(
           `${dropdownColumn}3:${dropdownColumn}${lastRow}`,
           {
             type: 'list',
             allowBlank: true,
-            formulae: [`Dropdowns!$${dropdownColumn}$${startRow}:$${dropdownColumn}$${startRow + col.dropdown.length - 1}`],
+            formulae: [
+              `Dropdowns!$${dropdownColumn}$${startRow}:$${dropdownColumn}$${startRow + col.dropdown.length - 1}`,
+            ],
             showErrorMessage: true,
             errorTitle: 'Invalid Value',
             error: 'Please select from the dropdown list',
@@ -172,7 +193,7 @@ export class BulkUploadService {
     // Get headers from row 2 (row 1 is instructions)
     const headers: string[] = [];
     worksheet.getRow(2).eachCell((cell, colNumber) => {
-      headers[colNumber - 1] = String(cell.value || '').trim();
+      headers[colNumber - 1] = this.getCellText(cell.value);
     });
 
     // Validate headers
@@ -199,9 +220,7 @@ export class BulkUploadService {
           if (cell.value && typeof cell.value === 'object') {
             // Handle rich text or formula results
             if ('richText' in cell.value) {
-              value = (cell.value as ExcelJS.CellRichTextValue).richText
-                .map((t) => t.text)
-                .join('');
+              value = cell.value.richText.map((t) => t.text).join('');
             } else if ('result' in cell.value) {
               value = (cell.value as ExcelJS.CellFormulaValue).result;
             }
@@ -257,7 +276,12 @@ export class BulkUploadService {
     row: ParsedRow,
     requiredFields: string[],
   ): Array<{ row: number; field: string; value: unknown; message: string }> {
-    const errors: Array<{ row: number; field: string; value: unknown; message: string }> = [];
+    const errors: Array<{
+      row: number;
+      field: string;
+      value: unknown;
+      message: string;
+    }> = [];
 
     for (const field of requiredFields) {
       const value = row.data[field];

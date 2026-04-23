@@ -61,12 +61,17 @@ describe('CloudinaryService - Comprehensive', () => {
 
   describe('uploadImage - Image Upload', () => {
     it('should upload image successfully', async () => {
-      const mockResult = { public_id: 'test-id', secure_url: 'https://test.com/image.png' };
+      const mockResult = {
+        public_id: 'test-id',
+        secure_url: 'https://test.com/image.png',
+      };
 
-      (cloudinary.uploader.upload_stream as jest.Mock).mockImplementation((options, callback) => {
-        callback(null, mockResult);
-        return { pipe: jest.fn() };
-      });
+      (cloudinary.uploader.upload_stream as jest.Mock).mockImplementation(
+        (options, callback) => {
+          callback(null, mockResult);
+          return { pipe: jest.fn() };
+        },
+      );
 
       const result = await service.uploadImage(mockMulterFile, 'test-folder');
 
@@ -78,34 +83,52 @@ describe('CloudinaryService - Comprehensive', () => {
     });
 
     it('should reject on upload error', async () => {
-      (cloudinary.uploader.upload_stream as jest.Mock).mockImplementation((options, callback) => {
-        callback({ message: 'Upload failed' }, null);
-        return { pipe: jest.fn() };
-      });
+      (cloudinary.uploader.upload_stream as jest.Mock).mockImplementation(
+        (options, callback) => {
+          callback({ message: 'Upload failed' }, null);
+          return { pipe: jest.fn() };
+        },
+      );
 
-      await expect(service.uploadImage(mockMulterFile)).rejects.toThrow('Upload failed');
+      await expect(service.uploadImage(mockMulterFile)).rejects.toThrow(
+        'Upload failed',
+      );
     });
 
     it('should reject when no result returned', async () => {
-      (cloudinary.uploader.upload_stream as jest.Mock).mockImplementation((options, callback) => {
-        callback(null, null);
-        return { pipe: jest.fn() };
-      });
+      (cloudinary.uploader.upload_stream as jest.Mock).mockImplementation(
+        (options, callback) => {
+          callback(null, null);
+          return { pipe: jest.fn() };
+        },
+      );
 
-      await expect(service.uploadImage(mockMulterFile)).rejects.toThrow('No result returned from Cloudinary');
+      await expect(service.uploadImage(mockMulterFile)).rejects.toThrow(
+        'No result returned from Cloudinary',
+      );
     });
   });
 
   describe('uploadFile - File Upload', () => {
     it('should upload file with resource type', async () => {
-      const mockResult = { public_id: 'file-id', secure_url: 'https://test.com/file.pdf' };
+      const mockResult = {
+        public_id: 'file-id',
+        secure_url: 'https://test.com/file.pdf',
+      };
 
-      (cloudinary.uploader.upload_stream as jest.Mock).mockImplementation((options, callback) => {
-        callback(null, mockResult);
-        return { pipe: jest.fn() };
-      });
+      (cloudinary.uploader.upload_stream as jest.Mock).mockImplementation(
+        (options, callback) => {
+          callback(null, mockResult);
+          return { pipe: jest.fn() };
+        },
+      );
 
-      const result = await service.uploadFile(mockMulterFile, 'documents', 'raw', { public_id: 'custom-id' });
+      const result = await service.uploadFile(
+        mockMulterFile,
+        'documents',
+        'raw',
+        { public_id: 'custom-id' },
+      );
 
       expect(result).toEqual(mockResult);
       expect(cloudinary.uploader.upload_stream).toHaveBeenCalledWith(
@@ -119,12 +142,17 @@ describe('CloudinaryService - Comprehensive', () => {
     });
 
     it('should use auto resource type by default', async () => {
-      const mockResult = { public_id: 'auto-id', secure_url: 'https://test.com/auto.png' };
+      const mockResult = {
+        public_id: 'auto-id',
+        secure_url: 'https://test.com/auto.png',
+      };
 
-      (cloudinary.uploader.upload_stream as jest.Mock).mockImplementation((options, callback) => {
-        callback(null, mockResult);
-        return { pipe: jest.fn() };
-      });
+      (cloudinary.uploader.upload_stream as jest.Mock).mockImplementation(
+        (options, callback) => {
+          callback(null, mockResult);
+          return { pipe: jest.fn() };
+        },
+      );
 
       await service.uploadFile(mockMulterFile);
 
@@ -137,12 +165,17 @@ describe('CloudinaryService - Comprehensive', () => {
     });
 
     it('should handle video resource type', async () => {
-      const mockResult = { public_id: 'video-id', secure_url: 'https://test.com/video.mp4' };
+      const mockResult = {
+        public_id: 'video-id',
+        secure_url: 'https://test.com/video.mp4',
+      };
 
-      (cloudinary.uploader.upload_stream as jest.Mock).mockImplementation((options, callback) => {
-        callback(null, mockResult);
-        return { pipe: jest.fn() };
-      });
+      (cloudinary.uploader.upload_stream as jest.Mock).mockImplementation(
+        (options, callback) => {
+          callback(null, mockResult);
+          return { pipe: jest.fn() };
+        },
+      );
 
       await service.uploadFile(mockMulterFile, 'videos', 'video');
 
@@ -156,12 +189,16 @@ describe('CloudinaryService - Comprehensive', () => {
     });
 
     it('should reject when no result returned', async () => {
-      (cloudinary.uploader.upload_stream as jest.Mock).mockImplementation((options, callback) => {
-        callback(null, null);
-        return { pipe: jest.fn() };
-      });
+      (cloudinary.uploader.upload_stream as jest.Mock).mockImplementation(
+        (options, callback) => {
+          callback(null, null);
+          return { pipe: jest.fn() };
+        },
+      );
 
-      await expect(service.uploadFile(mockMulterFile)).rejects.toThrow('No result returned from Cloudinary');
+      await expect(service.uploadFile(mockMulterFile)).rejects.toThrow(
+        'No result returned from Cloudinary',
+      );
     });
   });
 
@@ -169,9 +206,11 @@ describe('CloudinaryService - Comprehensive', () => {
     it('should delete file successfully', async () => {
       const mockResult = { result: 'ok' };
 
-      (cloudinary.uploader.destroy as jest.Mock).mockImplementation((publicId, options, callback) => {
-        callback(null, mockResult);
-      });
+      (cloudinary.uploader.destroy as jest.Mock).mockImplementation(
+        (publicId, options, callback) => {
+          callback(null, mockResult);
+        },
+      );
 
       const result = await service.deleteFile('test-public-id');
 
@@ -184,19 +223,27 @@ describe('CloudinaryService - Comprehensive', () => {
     });
 
     it('should reject on delete error', async () => {
-      (cloudinary.uploader.destroy as jest.Mock).mockImplementation((publicId, options, callback) => {
-        callback({ message: 'Delete failed' }, null);
-      });
+      (cloudinary.uploader.destroy as jest.Mock).mockImplementation(
+        (publicId, options, callback) => {
+          callback({ message: 'Delete failed' }, null);
+        },
+      );
 
-      await expect(service.deleteFile('test-id')).rejects.toThrow('Delete failed');
+      await expect(service.deleteFile('test-id')).rejects.toThrow(
+        'Delete failed',
+      );
     });
 
     it('should reject when no result returned', async () => {
-      (cloudinary.uploader.destroy as jest.Mock).mockImplementation((publicId, options, callback) => {
-        callback(null, null);
-      });
+      (cloudinary.uploader.destroy as jest.Mock).mockImplementation(
+        (publicId, options, callback) => {
+          callback(null, null);
+        },
+      );
 
-      await expect(service.deleteFile('test-id')).rejects.toThrow('No result returned from Cloudinary');
+      await expect(service.deleteFile('test-id')).rejects.toThrow(
+        'No result returned from Cloudinary',
+      );
     });
   });
 
@@ -204,9 +251,11 @@ describe('CloudinaryService - Comprehensive', () => {
     it('should delete raw file successfully', async () => {
       const mockResult = { result: 'ok' };
 
-      (cloudinary.uploader.destroy as jest.Mock).mockImplementation((publicId, options, callback) => {
-        callback(null, mockResult);
-      });
+      (cloudinary.uploader.destroy as jest.Mock).mockImplementation(
+        (publicId, options, callback) => {
+          callback(null, mockResult);
+        },
+      );
 
       const result = await service.deleteRawFile('raw-file-id');
 
@@ -219,19 +268,27 @@ describe('CloudinaryService - Comprehensive', () => {
     });
 
     it('should reject on delete error', async () => {
-      (cloudinary.uploader.destroy as jest.Mock).mockImplementation((publicId, options, callback) => {
-        callback({ message: 'Raw delete failed' }, null);
-      });
+      (cloudinary.uploader.destroy as jest.Mock).mockImplementation(
+        (publicId, options, callback) => {
+          callback({ message: 'Raw delete failed' }, null);
+        },
+      );
 
-      await expect(service.deleteRawFile('raw-id')).rejects.toThrow('Raw delete failed');
+      await expect(service.deleteRawFile('raw-id')).rejects.toThrow(
+        'Raw delete failed',
+      );
     });
 
     it('should reject when no result returned', async () => {
-      (cloudinary.uploader.destroy as jest.Mock).mockImplementation((publicId, options, callback) => {
-        callback(null, null);
-      });
+      (cloudinary.uploader.destroy as jest.Mock).mockImplementation(
+        (publicId, options, callback) => {
+          callback(null, null);
+        },
+      );
 
-      await expect(service.deleteRawFile('raw-id')).rejects.toThrow('No result returned from Cloudinary');
+      await expect(service.deleteRawFile('raw-id')).rejects.toThrow(
+        'No result returned from Cloudinary',
+      );
     });
   });
 
@@ -239,9 +296,11 @@ describe('CloudinaryService - Comprehensive', () => {
     it('should delete video file successfully', async () => {
       const mockResult = { result: 'ok' };
 
-      (cloudinary.uploader.destroy as jest.Mock).mockImplementation((publicId, options, callback) => {
-        callback(null, mockResult);
-      });
+      (cloudinary.uploader.destroy as jest.Mock).mockImplementation(
+        (publicId, options, callback) => {
+          callback(null, mockResult);
+        },
+      );
 
       const result = await service.deleteVideoFile('video-file-id');
 
@@ -254,19 +313,27 @@ describe('CloudinaryService - Comprehensive', () => {
     });
 
     it('should reject on delete error', async () => {
-      (cloudinary.uploader.destroy as jest.Mock).mockImplementation((publicId, options, callback) => {
-        callback({ message: 'Video delete failed' }, null);
-      });
+      (cloudinary.uploader.destroy as jest.Mock).mockImplementation(
+        (publicId, options, callback) => {
+          callback({ message: 'Video delete failed' }, null);
+        },
+      );
 
-      await expect(service.deleteVideoFile('video-id')).rejects.toThrow('Video delete failed');
+      await expect(service.deleteVideoFile('video-id')).rejects.toThrow(
+        'Video delete failed',
+      );
     });
 
     it('should reject when no result returned', async () => {
-      (cloudinary.uploader.destroy as jest.Mock).mockImplementation((publicId, options, callback) => {
-        callback(null, null);
-      });
+      (cloudinary.uploader.destroy as jest.Mock).mockImplementation(
+        (publicId, options, callback) => {
+          callback(null, null);
+        },
+      );
 
-      await expect(service.deleteVideoFile('video-id')).rejects.toThrow('No result returned from Cloudinary');
+      await expect(service.deleteVideoFile('video-id')).rejects.toThrow(
+        'No result returned from Cloudinary',
+      );
     });
   });
 
@@ -308,7 +375,8 @@ describe('CloudinaryService - Comprehensive', () => {
       const originalEnv = process.env.CLOUDINARY_DELIVERY_BASE_URL;
       delete process.env.CLOUDINARY_DELIVERY_BASE_URL;
 
-      const secureUrl = 'https://res.cloudinary.com/test/image/upload/v1/test.png';
+      const secureUrl =
+        'https://res.cloudinary.com/test/image/upload/v1/test.png';
       const result = service.getFileUrl(secureUrl);
 
       expect(result).toBe(secureUrl);
@@ -321,7 +389,8 @@ describe('CloudinaryService - Comprehensive', () => {
     it('should replace Cloudinary domain with delivery base URL', () => {
       process.env.CLOUDINARY_DELIVERY_BASE_URL = 'https://cdn.example.com';
 
-      const secureUrl = 'https://res.cloudinary.com/test/image/upload/v1/test.png';
+      const secureUrl =
+        'https://res.cloudinary.com/test/image/upload/v1/test.png';
       const result = service.getFileUrl(secureUrl);
 
       expect(result).toBe('https://cdn.example.com/image/upload/v1/test.png');
@@ -364,7 +433,9 @@ describe('CloudinaryService - Comprehensive', () => {
         version: 123,
       });
 
-      expect(result).toBe('https://cdn.example.com/image/upload/v123/test/image');
+      expect(result).toBe(
+        'https://cdn.example.com/image/upload/v123/test/image',
+      );
 
       delete process.env.CLOUDINARY_DELIVERY_BASE_URL;
     });
@@ -378,7 +449,9 @@ describe('CloudinaryService - Comprehensive', () => {
         format: 'png',
       });
 
-      expect(result).toBe('https://cdn.example.com/image/upload/test/image.png');
+      expect(result).toBe(
+        'https://cdn.example.com/image/upload/test/image.png',
+      );
 
       delete process.env.CLOUDINARY_DELIVERY_BASE_URL;
     });
@@ -413,7 +486,8 @@ describe('CloudinaryService - Comprehensive', () => {
 
   describe('getDownloadUrl', () => {
     it('should call getFileUrl with the same URL', () => {
-      const secureUrl = 'https://res.cloudinary.com/test/image/upload/v1/test.png';
+      const secureUrl =
+        'https://res.cloudinary.com/test/image/upload/v1/test.png';
       const getFileUrlSpy = jest.spyOn(service, 'getFileUrl');
 
       service.getDownloadUrl(secureUrl);

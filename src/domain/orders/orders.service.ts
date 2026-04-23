@@ -22,11 +22,19 @@ import { ITokenPayload } from 'src/core/constants/interfaces/common';
 import { DeliveryPartnerService } from '../delivery-partners/delivery-partners.service';
 import { InvoiceService } from '../../core/services/invoice.service';
 import { NotificationType } from '../notifications/entities/notification.entity';
+import { ProductsService } from '../products/products.service';
 import * as ExcelJS from 'exceljs';
-
 
 @Injectable()
 export class OrderService {
+  private formatDisplayDate(value: string | Date): string {
+    return new Date(value).toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    });
+  }
+
   constructor(
     @InjectRepository(Order)
     private readonly orderRepository: Repository<Order>,
@@ -35,7 +43,8 @@ export class OrderService {
     private readonly deliveryService: DeliveryPartnerService,
     private readonly invoiceService: InvoiceService,
     @InjectQueue('notifications') private readonly notificationsQueue: Queue,
-  ) { }
+    private readonly productsService: ProductsService,
+  ) {}
 
   async createOrder(userId: string, dto: CreateOrderDto) {
     const cartResponse = await this.cartService.getCart(userId, 1, 100);
@@ -44,6 +53,14 @@ export class OrderService {
     if (!cartItems || cartItems.length === 0) {
       throw new BadRequestException(
         'Can not place an order with an empty cart',
+      );
+    }
+
+    // Validate stock availability for all cart items
+    for (const item of cartItems) {
+      await this.productsService.checkStockAvailability(
+        item.product.id,
+        item.quantity,
       );
     }
 
@@ -78,6 +95,15 @@ export class OrderService {
         queryRunner.manager.create(OrderItem, { ...item, order: savedOrder }),
       );
       await queryRunner.manager.save(orderItems);
+
+      // Decrease stock for all ordered items
+      for (const item of cartItems) {
+        await this.productsService.decreaseStock(
+          item.product.id,
+          item.quantity,
+        );
+      }
+
       await this.cartService.clearCart(userId);
       await queryRunner.commitTransaction();
 
@@ -93,7 +119,7 @@ export class OrderService {
 
       // Generate and save invoice PDF
       try {
-        const invoicePDF = await this.invoiceService.generateInvoice(savedOrder);
+        await this.invoiceService.generateInvoice(savedOrder);
         // Here you can save the PDF to cloud storage or file system
         // For now, we'll just log that it was generated
         console.log(`Invoice generated for order ${savedOrder.id}`);
@@ -385,8 +411,7 @@ export class OrderService {
     if (!order) throw new NotFoundException('Order not found');
 
     // Get customer name from user profile or user entity
-    const customerName = order.user?.profile?.name ||
-      order.user?.email
+    const customerName = order.user?.profile?.name || order.user?.email;
 
     // Return only safe, non-sensitive information
     return {
@@ -407,7 +432,7 @@ export class OrderService {
         region: order.region,
         country: order.country,
       },
-      items: order.items.map(item => ({
+      items: order.items.map((item) => ({
         productName: item.product?.name || 'Unknown Product',
         quantity: item.quantity,
         price: item.price,
@@ -416,21 +441,30 @@ export class OrderService {
     };
   }
 
-  async generateOrdersExcelReport(user: ITokenPayload, status?: OrderStatus, startDate?: Date, endDate?: Date, search?: string) {
-    const query = this.orderRepository.createQueryBuilder('order')
+  async generateOrdersExcelReport(
+    user: ITokenPayload,
+    status?: OrderStatus,
+    startDate?: Date,
+    endDate?: Date,
+    search?: string,
+  ) {
+    const query = this.orderRepository
+      .createQueryBuilder('order')
       .leftJoinAndSelect('order.user', 'user')
       .leftJoinAndSelect('user.profile', 'profile')
       .leftJoinAndSelect('order.partner', 'deliveryPartner')
       .leftJoinAndSelect('deliveryPartner.user', 'deliveryPartnerUser')
       .leftJoinAndSelect('order.items', 'items')
       .leftJoinAndSelect('items.product', 'product')
-      .leftJoinAndSelect('product.supplier', 'supplier')
-
+      .leftJoinAndSelect('product.supplier', 'supplier');
 
     if (user.userType === UserType.SUPPLIER) {
-      query.innerJoin('order.items', 'itemFilter')
+      query
+        .innerJoin('order.items', 'itemFilter')
         .innerJoin('itemFilter.product', 'productFilter')
-        .andWhere('productFilter.supplier_id = :supplierId', { supplierId: user.id })
+        .andWhere('productFilter.supplier_id = :supplierId', {
+          supplierId: user.id,
+        });
     }
 
     if (status !== undefined) {
@@ -438,14 +472,20 @@ export class OrderService {
     }
 
     if (startDate && endDate) {
-      query.andWhere('order.createdAt BETWEEN :startDate AND :endDate', { startDate, endDate });
+      query.andWhere('order.createdAt BETWEEN :startDate AND :endDate', {
+        startDate,
+        endDate,
+      });
     }
 
     if (search) {
-      query.andWhere('(user.name ILIKE :search OR user.email ILIKE :search OR order.id::text ILIKE :search)', { search: `%${search}%` })
+      query.andWhere(
+        '(user.name ILIKE :search OR user.email ILIKE :search OR order.id::text ILIKE :search)',
+        { search: `%${search}%` },
+      );
     }
 
-    const orders = await query.orderBy('order.createdAt', 'DESC').getMany()
+    const orders = await query.orderBy('order.createdAt', 'DESC').getMany();
 
     // Create Excel workbook
     const workbook = new ExcelJS.Workbook();
@@ -459,7 +499,9 @@ export class OrderService {
       { header: 'Customer Name', key: 'customerName', width: 25 },
       { header: 'Customer Email', key: 'customerEmail', width: 30 },
       { header: 'Product Name', key: 'productName', width: 30 },
-      ...(isSupplier ? [] : [{ header: 'Supplier', key: 'supplier', width: 25 }]),
+      ...(isSupplier
+        ? []
+        : [{ header: 'Supplier', key: 'supplier', width: 25 }]),
       { header: 'Quantity', key: 'quantity', width: 10 },
       { header: 'Price', key: 'price', width: 15 },
       { header: 'Total Amount', key: 'totalAmount', width: 15 },
@@ -468,14 +510,14 @@ export class OrderService {
       { header: 'Order Date', key: 'orderDate', width: 20 },
       { header: 'Delivery Partner', key: 'deliveryPartner', width: 25 },
       { header: 'Shipping Address', key: 'shippingAddress', width: 40 },
-    ]
+    ];
 
-    worksheet.getRow(1).font = { bold: true, size: 12 }
+    worksheet.getRow(1).font = { bold: true, size: 12 };
     worksheet.getRow(1).fill = {
       type: 'pattern',
       pattern: 'solid',
       fgColor: { argb: 'FF667EEA' },
-    }
+    };
     worksheet.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } };
 
     // Add data rows
@@ -494,10 +536,11 @@ export class OrderService {
 
     for (const order of orders) {
       for (const item of order.items) {
-        const productSupplier = item.product?.supplier
-        const isSupplierProduct = user.userType === UserType.SUPPLIER
-          ? productSupplier?.id === user.id
-          : true;
+        const productSupplier = item.product?.supplier;
+        const isSupplierProduct =
+          user.userType === UserType.SUPPLIER
+            ? productSupplier?.id === user.id
+            : true;
 
         // Skip items not belonging to supplier if user is supplier
         if (user.userType === UserType.SUPPLIER && !isSupplierProduct) {
@@ -521,10 +564,11 @@ export class OrderService {
 
         // Only add supplier column for non-supplier users
         if (!isSupplier) {
-          rowData.supplier = productSupplier?.profile?.name || productSupplier?.email || 'N/A';
+          rowData.supplier =
+            productSupplier?.profile?.name || productSupplier?.email || 'N/A';
         }
 
-        worksheet.addRow(rowData)
+        worksheet.addRow(rowData);
       }
     }
 
@@ -541,7 +585,7 @@ export class OrderService {
     };
     worksheet.getCell(`A${summaryStartRow}`).font = {
       bold: true,
-      color: { argb: 'FFFFFFFF' }
+      color: { argb: 'FFFFFFFF' },
     };
 
     worksheet.getCell(`A${summaryStartRow + 1}`).value = 'Total Orders:';
@@ -549,12 +593,14 @@ export class OrderService {
     worksheet.getCell(`A${summaryStartRow + 1}`).font = { bold: true };
 
     // Calculate total revenue (sum of order totalAmounts)
-    const totalRevenue = orders.reduce((sum, order) => sum + Number(order.totalAmount), 0);
+    const totalRevenue = orders.reduce(
+      (sum, order) => sum + Number(order.totalAmount),
+      0,
+    );
     worksheet.getCell(`A${summaryStartRow + 2}`).value = 'Total Revenue:';
     worksheet.getCell(`B${summaryStartRow + 2}`).value = totalRevenue;
     worksheet.getCell(`B${summaryStartRow + 2}`).numFmt = '$#,##0.00';
     worksheet.getCell(`A${summaryStartRow + 2}`).font = { bold: true };
-
 
     // If supplier, show their specific totals
     if (user.userType === UserType.SUPPLIER) {
@@ -570,12 +616,14 @@ export class OrderService {
         }
       }
 
-      worksheet.getCell(`A${summaryStartRow + 3}`).value = 'Your Products Revenue:';
+      worksheet.getCell(`A${summaryStartRow + 3}`).value =
+        'Your Products Revenue:';
       worksheet.getCell(`B${summaryStartRow + 3}`).value = supplierTotalRevenue;
       worksheet.getCell(`B${summaryStartRow + 3}`).numFmt = '$#,##0.00';
       worksheet.getCell(`A${summaryStartRow + 3}`).font = { bold: true };
 
-      worksheet.getCell(`A${summaryStartRow + 4}`).value = 'Your Products Sold:';
+      worksheet.getCell(`A${summaryStartRow + 4}`).value =
+        'Your Products Sold:';
       worksheet.getCell(`B${summaryStartRow + 4}`).value = supplierTotalItems;
       worksheet.getCell(`A${summaryStartRow + 4}`).font = { bold: true };
     }
@@ -589,13 +637,37 @@ export class OrderService {
     return await this.invoiceService.generateInvoice(order);
   }
 
-  renderOrderDetailsHTML(order: any): string {
+  renderOrderDetailsHTML(order: {
+    orderId: string;
+    status: number;
+    paymentMethod: number;
+    tax: number;
+    totalAmount: number;
+    customerName?: string | null;
+    customerEmail?: string | null;
+    createdAt: string | Date;
+    updatedAt: string | Date;
+    shippingAddress?: {
+      addressLine1?: string;
+      addressLine2?: string;
+      city?: string;
+      state?: string;
+      region?: string;
+      country?: string;
+    };
+    items: Array<{
+      productName: string;
+      quantity: number;
+      price: number;
+      total: number;
+    }>;
+  }): string {
     const statusColors: Record<string, string> = {
-      'Pending': '#f59e0b',
-      'Confirmed': '#10b981',
-      'Shipped': '#3b82f6',
-      'Delivered': '#059669',
-      'Cancelled': '#ef4444',
+      Pending: '#f59e0b',
+      Confirmed: '#10b981',
+      Shipped: '#3b82f6',
+      Delivered: '#059669',
+      Cancelled: '#ef4444',
     };
     const statusTexts: Record<number, string> = {
       0: 'Pending',
@@ -607,7 +679,9 @@ export class OrderService {
     const statusText = statusTexts[order.status] || 'Unknown';
     const statusColor = statusColors[statusText] || '#6b7280';
 
-    const itemsHtml = order.items.map((item: any, index: number) => `
+    const itemsHtml = order.items
+      .map(
+        (item: any, index: number) => `
       <div class="item-row">
         <div class="item-info">
           <div class="item-index">${index + 1}</div>
@@ -618,7 +692,9 @@ export class OrderService {
           <span class="item-sum">$${item.total.toFixed(2)}</span>
         </div>
       </div>
-    `).join('');
+    `,
+      )
+      .join('');
 
     return `<!DOCTYPE html>
 <html lang="en">
@@ -759,11 +835,11 @@ export class OrderService {
         <div class="section-title">Order Information</div>
         <div class="info-row">
           <span class="info-label">Order Date</span>
-          <span class="info-value">${new Date(order?.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+          <span class="info-value">${this.formatDisplayDate(order.createdAt)}</span>
         </div>
         <div class="info-row">
           <span class="info-label">Last Updated</span>
-          <span class="info-value">${new Date(order?.updatedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+          <span class="info-value">${this.formatDisplayDate(order.updatedAt)}</span>
         </div>
         <div class="info-row">
           <span class="info-label">Payment Method</span>

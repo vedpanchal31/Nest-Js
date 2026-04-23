@@ -1,6 +1,10 @@
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication, ValidationPipe, CanActivate, NotFoundException } from '@nestjs/common';
+import {
+  INestApplication,
+  ValidationPipe,
+  CanActivate,
+  NotFoundException,
+} from '@nestjs/common';
 import request from 'supertest';
 import { App } from 'supertest/types';
 import { UserType } from '../src/core/constants/app.constants';
@@ -89,7 +93,9 @@ describe('ProfileController (e2e)', () => {
       .compile();
 
     app = moduleFixture.createNestApplication();
-    app.useGlobalPipes(new ValidationPipe({ transform: true, whitelist: true }));
+    app.useGlobalPipes(
+      new ValidationPipe({ transform: true, whitelist: true }),
+    );
     await app.init();
   });
 
@@ -114,7 +120,9 @@ describe('ProfileController (e2e)', () => {
     });
 
     it('should return 404 when user not found', async () => {
-      mockUsersService.findOne.mockRejectedValue(new NotFoundException('User not found'));
+      mockUsersService.findOne.mockRejectedValue(
+        new NotFoundException('User not found'),
+      );
 
       await request(app.getHttpServer())
         .get('/users/profile')

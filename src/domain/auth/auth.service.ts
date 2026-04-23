@@ -34,13 +34,18 @@ export class AuthService {
     private readonly emailTemplateService: EmailTemplateService,
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
     @InjectQueue('notifications') private readonly notificationsQueue: Queue,
-  ) { }
+  ) {}
 
   private _generateOtp(): string {
     return Math.floor(100000 + Math.random() * 900000).toString();
   }
 
-  private async _sendOtpEmail(email: string, otp: string, type: OtpType, userName?: string) {
+  private async _sendOtpEmail(
+    email: string,
+    otp: string,
+    type: OtpType,
+    userName?: string,
+  ) {
     if (type === OtpType.EMAIL_VERIFICATION) {
       const { html, subject } = this.emailTemplateService.renderOtpEmail({
         subject: 'Verify Your Email - Velora',
@@ -56,13 +61,14 @@ export class AuthService {
         html,
       });
     } else {
-      const { html, subject } = this.emailTemplateService.renderPasswordResetEmail({
-        subject: 'Reset Your Password - Velora',
-        title: 'Password Reset Request',
-        message: `We received a request to reset your password. Use the verification code below to complete the process.`,
-        otp,
-        userName,
-      });
+      const { html, subject } =
+        this.emailTemplateService.renderPasswordResetEmail({
+          subject: 'Reset Your Password - Velora',
+          title: 'Password Reset Request',
+          message: `We received a request to reset your password. Use the verification code below to complete the process.`,
+          otp,
+          userName,
+        });
 
       await this.mailerService.sendMail({
         to: email,
@@ -138,7 +144,8 @@ export class AuthService {
       userId: user.id,
       type: NotificationType.SYSTEM,
       title: 'Password Changed Successfully',
-      message: 'Your password has been changed successfully. If you did not make this change, please contact support immediately.',
+      message:
+        'Your password has been changed successfully. If you did not make this change, please contact support immediately.',
       actionUrl: '/settings/security',
       eventName: 'user.password-changed',
     });
@@ -389,14 +396,16 @@ export class AuthService {
         name: user.name,
         email: user.email,
         userType: user.userType,
-        roles: user.roles?.map((role) => ({
-          id: role.id,
-          name: role.name,
-          permissions: role.permissions?.map((perm) => ({
-            id: perm.id,
-            name: perm.name,
+        roles:
+          user.roles?.map((role) => ({
+            id: role.id,
+            name: role.name,
+            permissions:
+              role.permissions?.map((perm) => ({
+                id: perm.id,
+                name: perm.name,
+              })) || [],
           })) || [],
-        })) || [],
       },
     };
   }

@@ -19,10 +19,11 @@ describe('SettingsService - Comprehensive', () => {
     email: 'contact@velora.com',
     phone: '+1 (555) 123-4567',
     website: 'https://velora.com',
-    logoUrl: 'https://res.cloudinary.com/dcegoonge/image/upload/v1774418520/company-logo/hugpvjg6op8enixjsrhk.png',
+    logoUrl:
+      'https://res.cloudinary.com/dcegoonge/image/upload/v1774418520/company-logo/hugpvjg6op8enixjsrhk.png',
     createdAt: new Date(),
     updatedAt: new Date(),
-  } as Settings;
+  };
 
   const mockSettingsRepository = {
     findOne: jest.fn(),
@@ -32,7 +33,8 @@ describe('SettingsService - Comprehensive', () => {
 
   const mockCloudinaryService = {
     uploadImage: jest.fn().mockResolvedValue({
-      secure_url: 'https://res.cloudinary.com/dcegoonge/image/upload/v1774418520/company-logo/new-logo.png',
+      secure_url:
+        'https://res.cloudinary.com/dcegoonge/image/upload/v1774418520/company-logo/new-logo.png',
       public_id: 'company-logo/new-logo',
     }),
   };
@@ -112,20 +114,34 @@ describe('SettingsService - Comprehensive', () => {
 
     it('should upload logo to Cloudinary and update settings', async () => {
       settingsRepository.findOne.mockResolvedValue(mockSettings);
-      const mockFile = { originalname: 'logo.png', buffer: Buffer.from('test') } as any;
+      const mockFile = {
+        originalname: 'logo.png',
+        buffer: Buffer.from('test'),
+      } as any;
 
       const result = await service.uploadCompanyLogo(mockFile);
 
-      expect(cloudinaryService.uploadImage).toHaveBeenCalledWith(mockFile, 'company-logo');
+      expect(cloudinaryService.uploadImage).toHaveBeenCalledWith(
+        mockFile,
+        'company-logo',
+      );
       expect(settingsRepository.save).toHaveBeenCalled();
-      expect(result).toHaveProperty('message', 'Company logo uploaded successfully');
+      expect(result).toHaveProperty(
+        'message',
+        'Company logo uploaded successfully',
+      );
       expect(result).toHaveProperty('logoUrl');
       expect(result).toHaveProperty('publicId');
     });
 
     it('should throw error when Cloudinary upload fails', async () => {
-      const mockFile = { originalname: 'logo.png', buffer: Buffer.from('test') } as any;
-      cloudinaryService.uploadImage.mockRejectedValue(new Error('Upload failed'));
+      const mockFile = {
+        originalname: 'logo.png',
+        buffer: Buffer.from('test'),
+      } as any;
+      cloudinaryService.uploadImage.mockRejectedValue(
+        new Error('Upload failed'),
+      );
 
       await expect(service.uploadCompanyLogo(mockFile)).rejects.toThrow(
         'Failed to upload logo: Upload failed',
@@ -138,15 +154,22 @@ describe('SettingsService - Comprehensive', () => {
       settingsRepository.findOne.mockResolvedValue(mockSettings);
       // Reset the mock from previous test
       cloudinaryService.uploadImage.mockResolvedValue({
-        secure_url: 'https://res.cloudinary.com/dcegoonge/image/upload/v1774418520/company-logo/new-logo.png',
+        secure_url:
+          'https://res.cloudinary.com/dcegoonge/image/upload/v1774418520/company-logo/new-logo.png',
         public_id: 'company-logo/new-logo',
       });
-      const mockFile = { originalname: 'logo.png', buffer: Buffer.from('test') } as any;
+      const mockFile = {
+        originalname: 'logo.png',
+        buffer: Buffer.from('test'),
+      } as any;
 
       const result = await service.updateCompanyLogo(mockFile);
 
       expect(cloudinaryService.uploadImage).toHaveBeenCalled();
-      expect(result).toHaveProperty('message', 'Company logo uploaded successfully');
+      expect(result).toHaveProperty(
+        'message',
+        'Company logo uploaded successfully',
+      );
     });
   });
 
@@ -179,67 +202,103 @@ describe('SettingsService - Comprehensive', () => {
   describe('updateCompanyInfo - Partial Updates', () => {
     it('should update name when provided', async () => {
       settingsRepository.findOne.mockResolvedValue(mockSettings);
-      const saveSpy = jest.fn().mockResolvedValue({ ...mockSettings, name: 'New Company Name' });
+      const saveSpy = jest
+        .fn()
+        .mockResolvedValue({ ...mockSettings, name: 'New Company Name' });
       settingsRepository.save = saveSpy;
 
-      const result = await service.updateCompanyInfo({ name: 'New Company Name' });
+      const result = await service.updateCompanyInfo({
+        name: 'New Company Name',
+      });
 
-      expect(saveSpy).toHaveBeenCalledWith(expect.objectContaining({ name: 'New Company Name' }));
+      expect(saveSpy).toHaveBeenCalledWith(
+        expect.objectContaining({ name: 'New Company Name' }),
+      );
       expect(result.data.name).toBe('New Company Name');
     });
 
     it('should update tagline when provided', async () => {
       settingsRepository.findOne.mockResolvedValue(mockSettings);
-      const saveSpy = jest.fn().mockResolvedValue({ ...mockSettings, tagline: 'New Tagline' });
+      const saveSpy = jest
+        .fn()
+        .mockResolvedValue({ ...mockSettings, tagline: 'New Tagline' });
       settingsRepository.save = saveSpy;
 
-      const result = await service.updateCompanyInfo({ tagline: 'New Tagline' });
+      const result = await service.updateCompanyInfo({
+        tagline: 'New Tagline',
+      });
 
-      expect(saveSpy).toHaveBeenCalledWith(expect.objectContaining({ tagline: 'New Tagline' }));
+      expect(saveSpy).toHaveBeenCalledWith(
+        expect.objectContaining({ tagline: 'New Tagline' }),
+      );
       expect(result.data.tagline).toBe('New Tagline');
     });
 
     it('should update address when provided', async () => {
       settingsRepository.findOne.mockResolvedValue(mockSettings);
-      const saveSpy = jest.fn().mockResolvedValue({ ...mockSettings, address: 'New Address' });
+      const saveSpy = jest
+        .fn()
+        .mockResolvedValue({ ...mockSettings, address: 'New Address' });
       settingsRepository.save = saveSpy;
 
-      const result = await service.updateCompanyInfo({ address: 'New Address' });
+      const result = await service.updateCompanyInfo({
+        address: 'New Address',
+      });
 
-      expect(saveSpy).toHaveBeenCalledWith(expect.objectContaining({ address: 'New Address' }));
+      expect(saveSpy).toHaveBeenCalledWith(
+        expect.objectContaining({ address: 'New Address' }),
+      );
       expect(result.data.address).toBe('New Address');
     });
 
     it('should update email when provided', async () => {
       settingsRepository.findOne.mockResolvedValue(mockSettings);
-      const saveSpy = jest.fn().mockResolvedValue({ ...mockSettings, email: 'new@email.com' });
+      const saveSpy = jest
+        .fn()
+        .mockResolvedValue({ ...mockSettings, email: 'new@email.com' });
       settingsRepository.save = saveSpy;
 
-      const result = await service.updateCompanyInfo({ email: 'new@email.com' });
+      const result = await service.updateCompanyInfo({
+        email: 'new@email.com',
+      });
 
-      expect(saveSpy).toHaveBeenCalledWith(expect.objectContaining({ email: 'new@email.com' }));
+      expect(saveSpy).toHaveBeenCalledWith(
+        expect.objectContaining({ email: 'new@email.com' }),
+      );
       expect(result.data.email).toBe('new@email.com');
     });
 
     it('should update phone when provided', async () => {
       settingsRepository.findOne.mockResolvedValue(mockSettings);
-      const saveSpy = jest.fn().mockResolvedValue({ ...mockSettings, phone: '+1 999 888 7777' });
+      const saveSpy = jest
+        .fn()
+        .mockResolvedValue({ ...mockSettings, phone: '+1 999 888 7777' });
       settingsRepository.save = saveSpy;
 
-      const result = await service.updateCompanyInfo({ phone: '+1 999 888 7777' });
+      const result = await service.updateCompanyInfo({
+        phone: '+1 999 888 7777',
+      });
 
-      expect(saveSpy).toHaveBeenCalledWith(expect.objectContaining({ phone: '+1 999 888 7777' }));
+      expect(saveSpy).toHaveBeenCalledWith(
+        expect.objectContaining({ phone: '+1 999 888 7777' }),
+      );
       expect(result.data.phone).toBe('+1 999 888 7777');
     });
 
     it('should update website when provided', async () => {
       settingsRepository.findOne.mockResolvedValue(mockSettings);
-      const saveSpy = jest.fn().mockResolvedValue({ ...mockSettings, website: 'https://newsite.com' });
+      const saveSpy = jest
+        .fn()
+        .mockResolvedValue({ ...mockSettings, website: 'https://newsite.com' });
       settingsRepository.save = saveSpy;
 
-      const result = await service.updateCompanyInfo({ website: 'https://newsite.com' });
+      const result = await service.updateCompanyInfo({
+        website: 'https://newsite.com',
+      });
 
-      expect(saveSpy).toHaveBeenCalledWith(expect.objectContaining({ website: 'https://newsite.com' }));
+      expect(saveSpy).toHaveBeenCalledWith(
+        expect.objectContaining({ website: 'https://newsite.com' }),
+      );
       expect(result.data.website).toBe('https://newsite.com');
     });
 
@@ -279,7 +338,10 @@ describe('SettingsService - Comprehensive', () => {
 
       const result = await service.updateCompanyInfo({ name: 'New Company' });
 
-      expect(result).toHaveProperty('message', 'Company information updated successfully');
+      expect(result).toHaveProperty(
+        'message',
+        'Company information updated successfully',
+      );
       expect(result).toHaveProperty('data');
       expect(result.data).toHaveProperty('name');
       expect(result.data).toHaveProperty('tagline');

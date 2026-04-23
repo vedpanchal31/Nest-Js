@@ -2,10 +2,12 @@ import { ApiProperty } from '@nestjs/swagger';
 import {
   Allow,
   IsNotEmpty,
+  IsNumber,
   IsNumberString,
   IsOptional,
   IsString,
   IsUUID,
+  Min,
 } from 'class-validator';
 
 export class CreateProductDto {
@@ -55,4 +57,46 @@ export class CreateProductDto {
   @IsString()
   @IsOptional()
   supplierId?: string;
+
+  @ApiProperty({
+    description: 'Initial stock quantity',
+    example: 100,
+    required: false,
+    default: 0,
+  })
+  @IsNumber()
+  @IsOptional()
+  @Min(0)
+  stockQuantity?: number;
+
+  @ApiProperty({
+    description: 'Minimum stock threshold for alerts',
+    example: 10,
+    required: false,
+    default: 10,
+  })
+  @IsNumber()
+  @IsOptional()
+  @Min(0)
+  minStockThreshold?: number;
+
+  @ApiProperty({
+    description: 'Reorder level when stock needs replenishment',
+    example: 20,
+    required: false,
+    default: 20,
+  })
+  @IsNumber()
+  @IsOptional()
+  @Min(0)
+  reorderLevel?: number;
+
+  @ApiProperty({
+    description: 'Product availability status',
+    example: true,
+    required: false,
+    default: true,
+  })
+  @IsOptional()
+  isAvailable?: boolean;
 }

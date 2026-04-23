@@ -1,6 +1,10 @@
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication, ValidationPipe, CanActivate, NotFoundException } from '@nestjs/common';
+import {
+  INestApplication,
+  ValidationPipe,
+  CanActivate,
+  NotFoundException,
+} from '@nestjs/common';
 import request from 'supertest';
 import { App } from 'supertest/types';
 import { UserType } from '../src/core/constants/app.constants';
@@ -85,7 +89,9 @@ describe('UserManagementController (e2e)', () => {
       .compile();
 
     app = moduleFixture.createNestApplication();
-    app.useGlobalPipes(new ValidationPipe({ transform: true, whitelist: true }));
+    app.useGlobalPipes(
+      new ValidationPipe({ transform: true, whitelist: true }),
+    );
     await app.init();
   });
 
@@ -122,7 +128,12 @@ describe('UserManagementController (e2e)', () => {
         .set('Authorization', 'Bearer mock-jwt-token')
         .expect(200);
 
-      expect(mockUsersService.getAllUsers).toHaveBeenCalledWith(1, 10, undefined, "2");
+      expect(mockUsersService.getAllUsers).toHaveBeenCalledWith(
+        1,
+        10,
+        undefined,
+        '2',
+      );
     });
   });
 
@@ -193,7 +204,9 @@ describe('UserManagementController (e2e)', () => {
     });
 
     it('should return 404 when user not found', async () => {
-      mockUsersService.findOne.mockRejectedValue(new NotFoundException('User not found'));
+      mockUsersService.findOne.mockRejectedValue(
+        new NotFoundException('User not found'),
+      );
 
       await request(app.getHttpServer())
         .get('/user-management/non-existent-id')
@@ -216,7 +229,10 @@ describe('UserManagementController (e2e)', () => {
         .expect(200);
 
       expect(response.body.name).toBe('Updated Name');
-      expect(mockUsersService.updateUser).toHaveBeenCalledWith(mockUser.id, updateDto);
+      expect(mockUsersService.updateUser).toHaveBeenCalledWith(
+        mockUser.id,
+        updateDto,
+      );
     });
 
     it('should return 400 for invalid email', async () => {
@@ -236,7 +252,9 @@ describe('UserManagementController (e2e)', () => {
     });
 
     it('should return 404 when user not found', async () => {
-      mockUsersService.updateUser.mockRejectedValue(new NotFoundException('User not found'));
+      mockUsersService.updateUser.mockRejectedValue(
+        new NotFoundException('User not found'),
+      );
 
       await request(app.getHttpServer())
         .patch('/user-management/non-existent-id')
@@ -257,7 +275,9 @@ describe('UserManagementController (e2e)', () => {
     });
 
     it('should return 404 when user not found', async () => {
-      mockUsersService.removeUser.mockRejectedValue(new NotFoundException('User not found'));
+      mockUsersService.removeUser.mockRejectedValue(
+        new NotFoundException('User not found'),
+      );
 
       await request(app.getHttpServer())
         .delete('/user-management/non-existent-id')

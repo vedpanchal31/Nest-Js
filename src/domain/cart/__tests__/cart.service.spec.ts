@@ -94,7 +94,9 @@ describe('CartService - Comprehensive', () => {
         take: jest.fn().mockReturnThis(),
         getManyAndCount: jest.fn().mockResolvedValue([[mockCartItem], 1]),
       };
-      cartRepository.createQueryBuilder.mockReturnValue(mockQueryBuilder as any);
+      cartRepository.createQueryBuilder.mockReturnValue(
+        mockQueryBuilder as any,
+      );
 
       await service.getCart('specific-user-id', 1, 10);
 
@@ -113,7 +115,9 @@ describe('CartService - Comprehensive', () => {
         take: jest.fn().mockReturnThis(),
         getManyAndCount: jest.fn().mockResolvedValue([[mockCartItem], 1]),
       };
-      cartRepository.createQueryBuilder.mockReturnValue(mockQueryBuilder as any);
+      cartRepository.createQueryBuilder.mockReturnValue(
+        mockQueryBuilder as any,
+      );
 
       await service.getCart('user-uuid', 2, 10);
 
@@ -130,7 +134,9 @@ describe('CartService - Comprehensive', () => {
         take: jest.fn().mockReturnThis(),
         getManyAndCount: jest.fn().mockResolvedValue([[mockCartItem], 1]),
       };
-      cartRepository.createQueryBuilder.mockReturnValue(mockQueryBuilder as any);
+      cartRepository.createQueryBuilder.mockReturnValue(
+        mockQueryBuilder as any,
+      );
 
       await service.getCart('user-uuid', 1, 10);
 
@@ -172,14 +178,18 @@ describe('CartService - Comprehensive', () => {
       productRepository.findOne.mockResolvedValue(mockProduct);
       const existingCartItem = { ...mockCartItem, quantity: 2 };
       cartRepository.findOne.mockResolvedValue(existingCartItem);
-      const saveSpy = jest.fn().mockResolvedValue({ ...existingCartItem, quantity: 5 });
+      const saveSpy = jest
+        .fn()
+        .mockResolvedValue({ ...existingCartItem, quantity: 5 });
       cartRepository.save = saveSpy;
 
       const dto = { productId: 'product-uuid', quantity: 3 };
 
       await service.addToCart('user-uuid', dto);
 
-      expect(saveSpy).toHaveBeenCalledWith(expect.objectContaining({ quantity: 5 }));
+      expect(saveSpy).toHaveBeenCalledWith(
+        expect.objectContaining({ quantity: 5 }),
+      );
     });
 
     it('should find existing cart item by user and product id', async () => {
@@ -204,7 +214,9 @@ describe('CartService - Comprehensive', () => {
       cartRepository.findOne.mockResolvedValue(null);
 
       await expect(
-        service.updateCartQuantity('user-uuid', 'non-existent-id', { quantity: 3 }),
+        service.updateCartQuantity('user-uuid', 'non-existent-id', {
+          quantity: 3,
+        }),
       ).rejects.toThrow(NotFoundException);
     });
 
@@ -212,14 +224,18 @@ describe('CartService - Comprehensive', () => {
       cartRepository.findOne.mockResolvedValue(null);
 
       await expect(
-        service.updateCartQuantity('different-user', 'cart-item-uuid', { quantity: 3 }),
+        service.updateCartQuantity('different-user', 'cart-item-uuid', {
+          quantity: 3,
+        }),
       ).rejects.toThrow(NotFoundException);
     });
 
     it('should update quantity when cart item exists', async () => {
       const existingItem = { ...mockCartItem, quantity: 1 };
       cartRepository.findOne.mockResolvedValue(existingItem);
-      const saveSpy = jest.fn().mockResolvedValue({ ...existingItem, quantity: 5 });
+      const saveSpy = jest
+        .fn()
+        .mockResolvedValue({ ...existingItem, quantity: 5 });
       cartRepository.save = saveSpy;
 
       const result = await service.updateCartQuantity(
@@ -228,14 +244,18 @@ describe('CartService - Comprehensive', () => {
         { quantity: 5 },
       );
 
-      expect(saveSpy).toHaveBeenCalledWith(expect.objectContaining({ quantity: 5 }));
+      expect(saveSpy).toHaveBeenCalledWith(
+        expect.objectContaining({ quantity: 5 }),
+      );
       expect(result.quantity).toBe(5);
     });
 
     it('should verify user ownership before update', async () => {
       cartRepository.findOne.mockResolvedValue(mockCartItem);
 
-      await service.updateCartQuantity('user-uuid', 'cart-item-uuid', { quantity: 3 });
+      await service.updateCartQuantity('user-uuid', 'cart-item-uuid', {
+        quantity: 3,
+      });
 
       expect(cartRepository.findOne).toHaveBeenCalledWith({
         where: {

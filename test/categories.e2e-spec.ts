@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ValidationPipe, CanActivate } from '@nestjs/common';
 import request from 'supertest';
@@ -72,7 +71,9 @@ describe('CategoriesController (e2e)', () => {
       .compile();
 
     app = moduleFixture.createNestApplication();
-    app.useGlobalPipes(new ValidationPipe({ transform: true, whitelist: true }));
+    app.useGlobalPipes(
+      new ValidationPipe({ transform: true, whitelist: true }),
+    );
     await app.init();
   });
 
@@ -114,7 +115,11 @@ describe('CategoriesController (e2e)', () => {
         .expect(200);
 
       expect(response.body.data).toBeDefined();
-      expect(mockCategoriesService.getAllCategories).toHaveBeenCalledWith(2, 5, undefined);
+      expect(mockCategoriesService.getAllCategories).toHaveBeenCalledWith(
+        2,
+        5,
+        undefined,
+      );
     });
   });
 
@@ -126,14 +131,21 @@ describe('CategoriesController (e2e)', () => {
 
       expect(response.body).toHaveProperty('id', 'category-uuid');
       expect(response.body).toHaveProperty('name', 'Electronics');
-      expect(response.body).toHaveProperty('description', 'Electronic devices and gadgets');
+      expect(response.body).toHaveProperty(
+        'description',
+        'Electronic devices and gadgets',
+      );
     });
 
     it('should handle any id format', async () => {
       const customId = '550e8400-e29b-41d4-a716-446655440000';
-      await request(app.getHttpServer()).get(`/categories/${customId}`).expect(200);
+      await request(app.getHttpServer())
+        .get(`/categories/${customId}`)
+        .expect(200);
 
-      expect(mockCategoriesService.getAllCategoriesById).toHaveBeenCalledWith(customId);
+      expect(mockCategoriesService.getAllCategoriesById).toHaveBeenCalledWith(
+        customId,
+      );
     });
   });
 
@@ -243,7 +255,9 @@ describe('CategoriesController (e2e)', () => {
         .set('Authorization', 'Bearer mock-jwt-token')
         .expect(200);
 
-      expect(mockCategoriesService.deleteCategory).toHaveBeenCalledWith(customId);
+      expect(mockCategoriesService.deleteCategory).toHaveBeenCalledWith(
+        customId,
+      );
     });
   });
 });

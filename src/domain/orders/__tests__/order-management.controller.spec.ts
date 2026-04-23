@@ -54,7 +54,9 @@ describe('OrderManagementController - Comprehensive', () => {
     getManagementOrderDetails: jest.fn().mockResolvedValue(mockOrder),
     updateOrderStatus: jest.fn().mockResolvedValue({ ...mockOrder, status: 2 }),
     deleteOrder: jest.fn().mockResolvedValue(mockOrder),
-    generateOrdersExcelReport: jest.fn().mockResolvedValue(Buffer.from('excel-content')),
+    generateOrdersExcelReport: jest
+      .fn()
+      .mockResolvedValue(Buffer.from('excel-content')),
   };
 
   beforeEach(async () => {
@@ -68,7 +70,9 @@ describe('OrderManagementController - Comprehensive', () => {
       ],
     }).compile();
 
-    controller = module.get<OrderManagementController>(OrderManagementController);
+    controller = module.get<OrderManagementController>(
+      OrderManagementController,
+    );
     service = module.get(OrderService);
     jest.clearAllMocks();
   });
@@ -79,7 +83,7 @@ describe('OrderManagementController - Comprehensive', () => {
 
   describe('getManagementOrders - Query Parameter Validation', () => {
     it('should call service with default pagination', async () => {
-      await controller.getManagementOrders({ user: mockAdminToken } as any, 1, 10);
+      await controller.getManagementOrders({ user: mockAdminToken }, 1, 10);
 
       expect(service.getManagementOrders).toHaveBeenCalledWith(
         mockAdminToken,
@@ -94,7 +98,7 @@ describe('OrderManagementController - Comprehensive', () => {
 
     it('should pass all filter parameters', async () => {
       await controller.getManagementOrders(
-        { user: mockAdminToken } as any,
+        { user: mockAdminToken },
         2,
         20,
         3,
@@ -115,7 +119,7 @@ describe('OrderManagementController - Comprehensive', () => {
     });
 
     it('should pass supplier token for filtering', async () => {
-      await controller.getManagementOrders({ user: mockSupplierToken } as any, 1, 10);
+      await controller.getManagementOrders({ user: mockSupplierToken }, 1, 10);
 
       expect(service.getManagementOrders).toHaveBeenCalledWith(
         mockSupplierToken,
@@ -131,14 +135,20 @@ describe('OrderManagementController - Comprehensive', () => {
 
   describe('getManagementOrderDetails - Route Parameter', () => {
     it('should pass order id and user token', async () => {
-      await controller.getManagementOrderDetails({ user: mockAdminToken } as any, 'order-uuid');
+      await controller.getManagementOrderDetails(
+        { user: mockAdminToken },
+        'order-uuid',
+      );
 
-      expect(service.getManagementOrderDetails).toHaveBeenCalledWith('order-uuid', mockAdminToken);
+      expect(service.getManagementOrderDetails).toHaveBeenCalledWith(
+        'order-uuid',
+        mockAdminToken,
+      );
     });
 
     it('should return order details', async () => {
       const result = await controller.getManagementOrderDetails(
-        { user: mockAdminToken } as any,
+        { user: mockAdminToken },
         'order-uuid',
       );
 
@@ -150,18 +160,26 @@ describe('OrderManagementController - Comprehensive', () => {
     it('should update order status', async () => {
       const dto = { status: 2 };
 
-      await controller.updateOrderStatus({ user: mockAdminToken } as any, 'order-uuid', dto as any);
+      await controller.updateOrderStatus(
+        { user: mockAdminToken },
+        'order-uuid',
+        dto,
+      );
 
-      expect(service.updateOrderStatus).toHaveBeenCalledWith('order-uuid', dto, mockAdminToken);
+      expect(service.updateOrderStatus).toHaveBeenCalledWith(
+        'order-uuid',
+        dto,
+        mockAdminToken,
+      );
     });
 
     it('should return updated order', async () => {
       const dto = { status: 2 };
 
       const result = await controller.updateOrderStatus(
-        { user: mockAdminToken } as any,
+        { user: mockAdminToken },
         'order-uuid',
-        dto as any,
+        dto,
       );
 
       expect(result.status).toBe(2);
@@ -184,17 +202,16 @@ describe('OrderManagementController - Comprehensive', () => {
 
   describe('downloadOrdersReport - Excel Report Download', () => {
     it('should handle report generation error', async () => {
-      service.generateOrdersExcelReport.mockRejectedValue(new Error('Report generation failed'));
+      service.generateOrdersExcelReport.mockRejectedValue(
+        new Error('Report generation failed'),
+      );
 
       const mockRes = {
         status: jest.fn().mockReturnThis(),
         json: jest.fn(),
       } as any;
 
-      await controller.downloadOrdersReport(
-        { user: mockAdminToken } as any,
-        mockRes,
-      );
+      await controller.downloadOrdersReport({ user: mockAdminToken }, mockRes);
 
       expect(mockRes.status).toHaveBeenCalledWith(400);
       expect(mockRes.json).toHaveBeenCalledWith({

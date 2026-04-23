@@ -1,4 +1,10 @@
-import { MigrationInterface, QueryRunner, Table, TableColumn, TableForeignKey, TableIndex } from 'typeorm';
+import {
+  MigrationInterface,
+  QueryRunner,
+  Table,
+  TableColumn,
+  TableIndex,
+} from 'typeorm';
 
 export class AddMultiSelectCategoriesAndImages1774431438467 implements MigrationInterface {
   name = 'AddMultiSelectCategoriesAndImages1774431438467';
@@ -137,8 +143,14 @@ export class AddMultiSelectCategoriesAndImages1774431438467 implements Migration
 
   public async down(queryRunner: QueryRunner): Promise<void> {
     // Drop indexes first
-    await queryRunner.dropIndex('product_categories', 'IDX_PRODUCT_CATEGORIES_CATEGORY_ID');
-    await queryRunner.dropIndex('product_categories', 'IDX_PRODUCT_CATEGORIES_PRODUCT_ID');
+    await queryRunner.dropIndex(
+      'product_categories',
+      'IDX_PRODUCT_CATEGORIES_CATEGORY_ID',
+    );
+    await queryRunner.dropIndex(
+      'product_categories',
+      'IDX_PRODUCT_CATEGORIES_PRODUCT_ID',
+    );
     await queryRunner.dropIndex('product_categories', 'PK_PRODUCT_CATEGORIES');
 
     // Drop tables

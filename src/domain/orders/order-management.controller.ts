@@ -34,7 +34,7 @@ import { ITokenPayload } from 'src/core/constants/interfaces/common';
 @UseGuards(AuthGuard, RoleGuard)
 @Controller('order-management')
 export class OrderManagementController {
-  constructor(private readonly orderService: OrderService) { }
+  constructor(private readonly orderService: OrderService) {}
 
   @Get()
   @RoutePermission(PermissionType.VIEW_ORDERS)
@@ -121,7 +121,8 @@ export class OrderManagementController {
       const filename = `orders-report-${timestamp}.xlsx`;
 
       res.set({
-        'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        'Content-Type':
+          'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
         'Content-Disposition': `attachment; filename=${filename}`,
         'Content-Length': buffer.length,
       });

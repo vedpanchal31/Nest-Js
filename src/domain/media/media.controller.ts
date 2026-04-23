@@ -32,7 +32,7 @@ import {
 @ApiTags('Media')
 @Controller('media')
 export class MediaController {
-  constructor(private readonly mediaService: MediaService) { }
+  constructor(private readonly mediaService: MediaService) {}
 
   @Post('upload')
   @UseInterceptors(FilesInterceptor('files', 10))
@@ -131,7 +131,10 @@ export class MediaController {
     description: 'Download URL generated successfully',
     schema: {
       properties: {
-        downloadUrl: { type: 'string', example: 'https://res.cloudinary.com/...' },
+        downloadUrl: {
+          type: 'string',
+          example: 'https://res.cloudinary.com/...',
+        },
       },
     },
   })

@@ -1,10 +1,12 @@
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ValidationPipe, CanActivate } from '@nestjs/common';
 import request from 'supertest';
 import { App } from 'supertest/types';
 import { UserType, PermissionType } from '../src/core/constants/app.constants';
-import { RolesController, PermissionsController } from '../src/domain/roles/roles.controller';
+import {
+  RolesController,
+  PermissionsController,
+} from '../src/domain/roles/roles.controller';
 import { RolesService } from '../src/domain/roles/roles.service';
 import { AuthGuard } from '../src/core/guards/auth.guard';
 import { RoleGuard } from '../src/core/guards/role.guard';
@@ -25,12 +27,22 @@ describe('RolesController (e2e)', () => {
     getAllRoles: jest.fn().mockResolvedValue([mockRole]),
     getRoleById: jest.fn().mockResolvedValue(mockRole),
     createRole: jest.fn().mockResolvedValue(mockRole),
-    updateRole: jest.fn().mockResolvedValue({ ...mockRole, name: 'Updated Role' }),
+    updateRole: jest
+      .fn()
+      .mockResolvedValue({ ...mockRole, name: 'Updated Role' }),
     deleteRole: jest.fn().mockResolvedValue(mockRole),
-    getPermissionsByRoleId: jest.fn().mockResolvedValue([{ id: 'perm-uuid', name: 'CREATE_CATEGORY' }]),
-    updateRolePermissions: jest.fn().mockResolvedValue({ ...mockRole, permissions: [] }),
-    assignRoleToUser: jest.fn().mockResolvedValue({ id: 'user-uuid', roles: [mockRole] }),
-    getAllPermissions: jest.fn().mockResolvedValue([{ id: 'perm-uuid', name: 'CREATE_CATEGORY' }]),
+    getPermissionsByRoleId: jest
+      .fn()
+      .mockResolvedValue([{ id: 'perm-uuid', name: 'CREATE_CATEGORY' }]),
+    updateRolePermissions: jest
+      .fn()
+      .mockResolvedValue({ ...mockRole, permissions: [] }),
+    assignRoleToUser: jest
+      .fn()
+      .mockResolvedValue({ id: 'user-uuid', roles: [mockRole] }),
+    getAllPermissions: jest
+      .fn()
+      .mockResolvedValue([{ id: 'perm-uuid', name: 'CREATE_CATEGORY' }]),
   };
 
   const mockAuthGuard: CanActivate = {
@@ -67,7 +79,9 @@ describe('RolesController (e2e)', () => {
       .compile();
 
     app = moduleFixture.createNestApplication();
-    app.useGlobalPipes(new ValidationPipe({ transform: true, whitelist: true }));
+    app.useGlobalPipes(
+      new ValidationPipe({ transform: true, whitelist: true }),
+    );
     await app.init();
   });
 
@@ -196,7 +210,10 @@ describe('RolesController (e2e)', () => {
   describe('PATCH /roles/permissions/:id', () => {
     it('should update role permissions (admin)', async () => {
       const permissionsDto = {
-        permissions: [PermissionType.CREATE_CATEGORY, PermissionType.UPDATE_CATEGORY],
+        permissions: [
+          PermissionType.CREATE_CATEGORY,
+          PermissionType.UPDATE_CATEGORY,
+        ],
       };
 
       const response = await request(app.getHttpServer())

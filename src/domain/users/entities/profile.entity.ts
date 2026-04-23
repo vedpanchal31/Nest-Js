@@ -13,8 +13,8 @@ import { User } from './user.entity';
 
 @Entity('profiles')
 @Index(['email'])
-@Index(['mobile'])                               // Mobile search
-@Index(['countryShortcode'])                      // Country filtering
+@Index(['mobile']) // Mobile search
+@Index(['countryShortcode']) // Country filtering
 @Index(['countryShortcode', 'mobile'])
 export class Profile {
   @PrimaryGeneratedColumn('uuid')

@@ -11,7 +11,11 @@ import { Queue } from 'bull';
 import { getQueueToken } from '@nestjs/bull';
 import { BadRequestException, UnauthorizedException } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
-import { OtpType, TokenType, UserType } from '../../../core/constants/app.constants';
+import {
+  OtpType,
+  TokenType,
+  UserType,
+} from '../../../core/constants/app.constants';
 
 jest.mock('bcrypt', () => ({
   hash: jest.fn(),
@@ -48,7 +52,17 @@ describe('AuthService', () => {
 
   const mockUserWithRoles: User = {
     ...mockVerifiedUser,
-    roles: [{ id: '550e8400-e29b-41d4-a716-446655440001', name: 'USER', description: 'User Role', type: 1, permissions: [], users: [], createdBy: undefined as unknown as User }],
+    roles: [
+      {
+        id: '550e8400-e29b-41d4-a716-446655440001',
+        name: 'USER',
+        description: 'User Role',
+        type: 1,
+        permissions: [],
+        users: [],
+        createdBy: undefined as unknown as User,
+      },
+    ],
   };
 
   beforeEach(async () => {
@@ -127,17 +141,23 @@ describe('AuthService', () => {
 
     it('should throw BadRequestException when trying to register as Admin', async () => {
       const adminDto = { ...registerDto, userType: UserType.ADMIN };
-      await expect(service.register(adminDto)).rejects.toThrow(BadRequestException);
+      await expect(service.register(adminDto)).rejects.toThrow(
+        BadRequestException,
+      );
     });
 
     it('should throw BadRequestException when trying to register as SubAdmin', async () => {
       const subAdminDto = { ...registerDto, userType: UserType.SUBADMIN };
-      await expect(service.register(subAdminDto)).rejects.toThrow(BadRequestException);
+      await expect(service.register(subAdminDto)).rejects.toThrow(
+        BadRequestException,
+      );
     });
 
     it('should throw BadRequestException when user already exists', async () => {
       usersRepository.findOne.mockResolvedValue(mockUser);
-      await expect(service.register(registerDto)).rejects.toThrow(BadRequestException);
+      await expect(service.register(registerDto)).rejects.toThrow(
+        BadRequestException,
+      );
       expect(usersRepository.findOne).toHaveBeenCalledWith({
         where: { email: registerDto.email },
         withDeleted: true,
@@ -166,12 +186,16 @@ describe('AuthService', () => {
       expect(usersRepository.save).toHaveBeenCalledWith(mockUser);
       expect(cacheManager.set).toHaveBeenCalled();
       expect(mailerService.sendMail).toHaveBeenCalled();
-      expect(notificationsQueue.add).toHaveBeenCalledWith('welcome-notification', {
-        userId: mockUser.id,
-        userName: mockUser.name,
-      });
+      expect(notificationsQueue.add).toHaveBeenCalledWith(
+        'welcome-notification',
+        {
+          userId: mockUser.id,
+          userName: mockUser.name,
+        },
+      );
       expect(result).toEqual({
-        message: 'Signup successful. Please verify your email with the OTP sent.',
+        message:
+          'Signup successful. Please verify your email with the OTP sent.',
         user: {
           id: mockUser.id,
           name: mockUser.name,
@@ -192,7 +216,7 @@ describe('AuthService', () => {
       usersRepository.create.mockReturnValue(mockUser);
       usersRepository.save.mockResolvedValue(mockUser);
 
-      await service.register(dtoWithoutType as any);
+      await service.register(dtoWithoutType);
 
       expect(usersRepository.create).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -210,20 +234,26 @@ describe('AuthService', () => {
 
     it('should throw UnauthorizedException when user not found', async () => {
       usersRepository.findOne.mockResolvedValue(null);
-      await expect(service.signin(loginDto)).rejects.toThrow(UnauthorizedException);
+      await expect(service.signin(loginDto)).rejects.toThrow(
+        UnauthorizedException,
+      );
     });
 
     it('should throw UnauthorizedException when password is invalid', async () => {
       usersRepository.findOne.mockResolvedValue(mockVerifiedUser);
       (bcrypt.compare as jest.Mock).mockResolvedValue(false);
-      await expect(service.signin(loginDto)).rejects.toThrow(UnauthorizedException);
+      await expect(service.signin(loginDto)).rejects.toThrow(
+        UnauthorizedException,
+      );
     });
 
     it('should send OTP and throw UnauthorizedException when email not verified', async () => {
       usersRepository.findOne.mockResolvedValue(mockUser);
       (bcrypt.compare as jest.Mock).mockResolvedValue(true);
 
-      await expect(service.signin(loginDto)).rejects.toThrow(UnauthorizedException);
+      await expect(service.signin(loginDto)).rejects.toThrow(
+        UnauthorizedException,
+      );
       expect(cacheManager.set).toHaveBeenCalled();
       expect(mailerService.sendMail).toHaveBeenCalled();
     });
@@ -290,30 +320,43 @@ describe('AuthService', () => {
 
     it('should throw BadRequestException when user not found', async () => {
       usersRepository.findOne.mockResolvedValue(null);
-      await expect(service.verifyOtp(verifyOtpDto)).rejects.toThrow(BadRequestException);
+      await expect(service.verifyOtp(verifyOtpDto)).rejects.toThrow(
+        BadRequestException,
+      );
     });
 
     it('should throw BadRequestException when OTP is invalid', async () => {
       usersRepository.findOne.mockResolvedValue(mockUser);
       cacheManager.get.mockResolvedValue('654321');
-      await expect(service.verifyOtp(verifyOtpDto)).rejects.toThrow(BadRequestException);
+      await expect(service.verifyOtp(verifyOtpDto)).rejects.toThrow(
+        BadRequestException,
+      );
     });
 
     it('should throw BadRequestException when OTP not found', async () => {
       usersRepository.findOne.mockResolvedValue(mockUser);
       cacheManager.get.mockResolvedValue(null);
-      await expect(service.verifyOtp(verifyOtpDto)).rejects.toThrow(BadRequestException);
+      await expect(service.verifyOtp(verifyOtpDto)).rejects.toThrow(
+        BadRequestException,
+      );
     });
 
     it('should successfully verify email OTP', async () => {
       usersRepository.findOne.mockResolvedValue(mockUser);
       cacheManager.get.mockResolvedValue('123456');
-      usersRepository.save.mockResolvedValue({ ...mockUser, isEmailVerified: true });
+      usersRepository.save.mockResolvedValue({
+        ...mockUser,
+        isEmailVerified: true,
+      });
 
       const result = await service.verifyOtp(verifyOtpDto);
 
-      expect(usersRepository.save).toHaveBeenCalledWith(expect.objectContaining({ isEmailVerified: true }));
-      expect(cacheManager.del).toHaveBeenCalledWith(`otp:${verifyOtpDto.email}:${verifyOtpDto.otpType}`);
+      expect(usersRepository.save).toHaveBeenCalledWith(
+        expect.objectContaining({ isEmailVerified: true }),
+      );
+      expect(cacheManager.del).toHaveBeenCalledWith(
+        `otp:${verifyOtpDto.email}:${verifyOtpDto.otpType}`,
+      );
       expect(result).toEqual({
         message: 'Verification successful',
         isEmailVerified: true,
@@ -345,7 +388,9 @@ describe('AuthService', () => {
         'mock-reset-token',
         900000,
       );
-      expect(cacheManager.del).toHaveBeenCalledWith(`otp:${forgotPasswordOtpDto.email}:${forgotPasswordOtpDto.otpType}`);
+      expect(cacheManager.del).toHaveBeenCalledWith(
+        `otp:${forgotPasswordOtpDto.email}:${forgotPasswordOtpDto.otpType}`,
+      );
       expect(result).toEqual({
         message: 'OTP verified. You can now reset your password.',
         resetToken: 'mock-reset-token',
@@ -361,13 +406,20 @@ describe('AuthService', () => {
 
     it('should throw BadRequestException when user not found', async () => {
       usersRepository.findOne.mockResolvedValue(null);
-      await expect(service.resendOtp(resendOtpDto)).rejects.toThrow(BadRequestException);
+      await expect(service.resendOtp(resendOtpDto)).rejects.toThrow(
+        BadRequestException,
+      );
     });
 
     it('should throw BadRequestException when user already verified for email verification type', async () => {
       usersRepository.findOne.mockResolvedValue(mockVerifiedUser);
-      const emailVerifyDto = { ...resendOtpDto, type: OtpType.EMAIL_VERIFICATION };
-      await expect(service.resendOtp(emailVerifyDto)).rejects.toThrow(BadRequestException);
+      const emailVerifyDto = {
+        ...resendOtpDto,
+        type: OtpType.EMAIL_VERIFICATION,
+      };
+      await expect(service.resendOtp(emailVerifyDto)).rejects.toThrow(
+        BadRequestException,
+      );
     });
 
     it('should successfully resend email verification OTP', async () => {
@@ -387,7 +439,10 @@ describe('AuthService', () => {
 
     it('should successfully resend forgot password OTP', async () => {
       usersRepository.findOne.mockResolvedValue(mockVerifiedUser);
-      const forgotPasswordDto = { ...resendOtpDto, type: OtpType.FORGOT_PASSWORD };
+      const forgotPasswordDto = {
+        ...resendOtpDto,
+        type: OtpType.FORGOT_PASSWORD,
+      };
 
       const result = await service.resendOtp(forgotPasswordDto);
 
@@ -404,13 +459,17 @@ describe('AuthService', () => {
 
     it('should throw BadRequestException when user not found', async () => {
       usersRepository.findOne.mockResolvedValue(null);
-      await expect(service.forgotPassword(forgotPasswordDto)).rejects.toThrow(BadRequestException);
+      await expect(service.forgotPassword(forgotPasswordDto)).rejects.toThrow(
+        BadRequestException,
+      );
     });
 
     it('should throw UnauthorizedException when user email is not verified', async () => {
       const unverifiedUser = { ...mockUser, isEmailVerified: false };
       usersRepository.findOne.mockResolvedValue(unverifiedUser);
-      await expect(service.forgotPassword(forgotPasswordDto)).rejects.toThrow(UnauthorizedException);
+      await expect(service.forgotPassword(forgotPasswordDto)).rejects.toThrow(
+        UnauthorizedException,
+      );
     });
 
     it('should successfully send forgot password OTP', async () => {
@@ -423,10 +482,12 @@ describe('AuthService', () => {
         expect.any(String),
         600000,
       );
-      expect(mailerService.sendMail).toHaveBeenCalledWith(expect.objectContaining({
-        to: forgotPasswordDto.email,
-        subject: 'Reset Your Password',
-      }));
+      expect(mailerService.sendMail).toHaveBeenCalledWith(
+        expect.objectContaining({
+          to: forgotPasswordDto.email,
+          subject: 'Reset Your Password',
+        }),
+      );
       expect(result).toEqual({ message: 'OTP sent successfully' });
     });
   });
@@ -440,13 +501,20 @@ describe('AuthService', () => {
     };
 
     it('should throw BadRequestException when passwords do not match', async () => {
-      const mismatchedDto = { ...resetPasswordDto, confirmPassword: 'DifferentPassword@123' };
-      await expect(service.resetPassword(mismatchedDto)).rejects.toThrow(BadRequestException);
+      const mismatchedDto = {
+        ...resetPasswordDto,
+        confirmPassword: 'DifferentPassword@123',
+      };
+      await expect(service.resetPassword(mismatchedDto)).rejects.toThrow(
+        BadRequestException,
+      );
     });
 
     it('should throw BadRequestException when reset token is invalid', async () => {
       jwtService.verifyAsync.mockRejectedValue(new Error('Invalid token'));
-      await expect(service.resetPassword(resetPasswordDto)).rejects.toThrow(BadRequestException);
+      await expect(service.resetPassword(resetPasswordDto)).rejects.toThrow(
+        BadRequestException,
+      );
     });
 
     it('should throw BadRequestException when token email does not match', async () => {
@@ -454,7 +522,9 @@ describe('AuthService', () => {
         email: 'different@example.com',
         type: TokenType.RESET_PASSWORD,
       });
-      await expect(service.resetPassword(resetPasswordDto)).rejects.toThrow(BadRequestException);
+      await expect(service.resetPassword(resetPasswordDto)).rejects.toThrow(
+        BadRequestException,
+      );
     });
 
     it('should throw BadRequestException when token type is not RESET_PASSWORD', async () => {
@@ -462,7 +532,9 @@ describe('AuthService', () => {
         email: resetPasswordDto.email,
         type: TokenType.LOGIN,
       });
-      await expect(service.resetPassword(resetPasswordDto)).rejects.toThrow(BadRequestException);
+      await expect(service.resetPassword(resetPasswordDto)).rejects.toThrow(
+        BadRequestException,
+      );
     });
 
     it('should throw BadRequestException when user not found', async () => {
@@ -471,7 +543,9 @@ describe('AuthService', () => {
         type: TokenType.RESET_PASSWORD,
       });
       usersRepository.findOne.mockResolvedValue(null);
-      await expect(service.resetPassword(resetPasswordDto)).rejects.toThrow(BadRequestException);
+      await expect(service.resetPassword(resetPasswordDto)).rejects.toThrow(
+        BadRequestException,
+      );
     });
 
     it('should throw BadRequestException when reset token not found in cache', async () => {
@@ -481,7 +555,9 @@ describe('AuthService', () => {
       });
       usersRepository.findOne.mockResolvedValue(mockVerifiedUser);
       cacheManager.get.mockResolvedValue(null);
-      await expect(service.resetPassword(resetPasswordDto)).rejects.toThrow(BadRequestException);
+      await expect(service.resetPassword(resetPasswordDto)).rejects.toThrow(
+        BadRequestException,
+      );
     });
 
     it('should throw BadRequestException when reset token does not match cached token', async () => {
@@ -491,7 +567,9 @@ describe('AuthService', () => {
       });
       usersRepository.findOne.mockResolvedValue(mockVerifiedUser);
       cacheManager.get.mockResolvedValue('different-token');
-      await expect(service.resetPassword(resetPasswordDto)).rejects.toThrow(BadRequestException);
+      await expect(service.resetPassword(resetPasswordDto)).rejects.toThrow(
+        BadRequestException,
+      );
     });
 
     it('should throw BadRequestException when new password is same as old password', async () => {
@@ -502,7 +580,9 @@ describe('AuthService', () => {
       usersRepository.findOne.mockResolvedValue(mockVerifiedUser);
       cacheManager.get.mockResolvedValue(resetPasswordDto.resetToken);
       (bcrypt.compare as jest.Mock).mockResolvedValue(true);
-      await expect(service.resetPassword(resetPasswordDto)).rejects.toThrow(BadRequestException);
+      await expect(service.resetPassword(resetPasswordDto)).rejects.toThrow(
+        BadRequestException,
+      );
     });
 
     it('should successfully reset password', async () => {
@@ -514,13 +594,18 @@ describe('AuthService', () => {
       cacheManager.get.mockResolvedValue(resetPasswordDto.resetToken);
       (bcrypt.compare as jest.Mock).mockResolvedValue(false);
       (bcrypt.hash as jest.Mock).mockResolvedValue('newHashedPassword');
-      usersRepository.save.mockResolvedValue({ ...mockVerifiedUser, password: 'newHashedPassword' });
+      usersRepository.save.mockResolvedValue({
+        ...mockVerifiedUser,
+        password: 'newHashedPassword',
+      });
 
       const result = await service.resetPassword(resetPasswordDto);
 
       expect(bcrypt.hash).toHaveBeenCalledWith(resetPasswordDto.password, 10);
       expect(usersRepository.save).toHaveBeenCalled();
-      expect(cacheManager.del).toHaveBeenCalledWith(`reset_token:${resetPasswordDto.email}`);
+      expect(cacheManager.del).toHaveBeenCalledWith(
+        `reset_token:${resetPasswordDto.email}`,
+      );
       expect(notificationsQueue.add).toHaveBeenCalledWith('send-notification', {
         userId: mockVerifiedUser.id,
         type: expect.any(String),
@@ -530,14 +615,20 @@ describe('AuthService', () => {
         eventName: 'user.password-changed',
       });
       expect(result).toEqual({
-        message: 'Password reset successfully. You can now login with your new password.',
+        message:
+          'Password reset successfully. You can now login with your new password.',
       });
     });
   });
 
   describe('validate', () => {
     it('should return payload when token is valid', async () => {
-      const mockPayload = { email: 'test@example.com', id: 'user-id', type: TokenType.LOGIN, userType: UserType.USER };
+      const mockPayload = {
+        email: 'test@example.com',
+        id: 'user-id',
+        type: TokenType.LOGIN,
+        userType: UserType.USER,
+      };
       jwtService.verifyAsync.mockResolvedValue(mockPayload);
 
       const result = await service.validate('valid-token');

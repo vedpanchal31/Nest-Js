@@ -1,7 +1,10 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { CloudinaryService, MulterFile } from '../../core/cloudinary/cloudinary.service';
+import {
+  CloudinaryService,
+  MulterFile,
+} from '../../core/cloudinary/cloudinary.service';
 import { UploadApiResponse } from 'cloudinary';
 import { Settings } from './entities/settings.entity';
 
@@ -11,7 +14,7 @@ export class SettingsService {
     private readonly cloudinaryService: CloudinaryService,
     @InjectRepository(Settings)
     private readonly settingsRepository: Repository<Settings>,
-  ) { }
+  ) {}
 
   private async getOrCreateSettings(): Promise<Settings> {
     let settings = await this.settingsRepository.findOne({ where: {} });
@@ -38,7 +41,7 @@ export class SettingsService {
     try {
       const uploadResult = await this.cloudinaryService.uploadImage(
         file,
-        'company-logo'
+        'company-logo',
       );
 
       let logoUrl = '';

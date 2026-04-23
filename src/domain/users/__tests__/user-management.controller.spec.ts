@@ -80,7 +80,12 @@ describe('UserManagementController', () => {
 
       const result = await controller.getUsers(1, 10, undefined, undefined);
 
-      expect(service.getAllUsers).toHaveBeenCalledWith(1, 10, undefined, undefined);
+      expect(service.getAllUsers).toHaveBeenCalledWith(
+        1,
+        10,
+        undefined,
+        undefined,
+      );
       expect(result).toEqual(mockResponse);
     });
 
@@ -95,7 +100,12 @@ describe('UserManagementController', () => {
 
       await controller.getUsers(1, 10, 'test', UserType.ADMIN);
 
-      expect(service.getAllUsers).toHaveBeenCalledWith(1, 10, 'test', UserType.ADMIN);
+      expect(service.getAllUsers).toHaveBeenCalledWith(
+        1,
+        10,
+        'test',
+        UserType.ADMIN,
+      );
     });
   });
 
@@ -124,7 +134,7 @@ describe('UserManagementController', () => {
       };
       service.createUser.mockResolvedValue(mockUser);
 
-      await controller.createManagedUser(dtoWithoutRole as any);
+      await controller.createManagedUser(dtoWithoutRole);
 
       expect(service.createUser).toHaveBeenCalledWith(dtoWithoutRole);
     });
@@ -161,7 +171,7 @@ describe('UserManagementController', () => {
       const updatedUser = { ...mockUser, ...updateDto };
       service.updateUser.mockResolvedValue(updatedUser);
 
-      const result = await controller.updateManagedUser(mockUser.id, updateDto as any);
+      const result = await controller.updateManagedUser(mockUser.id, updateDto);
 
       expect(service.updateUser).toHaveBeenCalledWith(mockUser.id, updateDto);
       expect(result.name).toBe('Updated Name');
@@ -169,11 +179,17 @@ describe('UserManagementController', () => {
 
     it('should update user with partial data', async () => {
       const partialUpdate = { name: 'New Name Only' };
-      service.updateUser.mockResolvedValue({ ...mockUser, ...partialUpdate } as any);
+      service.updateUser.mockResolvedValue({
+        ...mockUser,
+        ...partialUpdate,
+      });
 
-      await controller.updateManagedUser(mockUser.id, partialUpdate as any);
+      await controller.updateManagedUser(mockUser.id, partialUpdate);
 
-      expect(service.updateUser).toHaveBeenCalledWith(mockUser.id, partialUpdate);
+      expect(service.updateUser).toHaveBeenCalledWith(
+        mockUser.id,
+        partialUpdate,
+      );
     });
 
     it('should update user password when provided', async () => {
@@ -182,9 +198,12 @@ describe('UserManagementController', () => {
       };
       service.updateUser.mockResolvedValue(mockUser);
 
-      await controller.updateManagedUser(mockUser.id, updateWithPassword as any);
+      await controller.updateManagedUser(mockUser.id, updateWithPassword);
 
-      expect(service.updateUser).toHaveBeenCalledWith(mockUser.id, updateWithPassword);
+      expect(service.updateUser).toHaveBeenCalledWith(
+        mockUser.id,
+        updateWithPassword,
+      );
     });
   });
 

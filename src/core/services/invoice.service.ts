@@ -5,9 +5,19 @@ import * as puppeteer from 'puppeteer';
 import { SettingsService } from '../../domain/settings/settings.service';
 import * as QRCode from 'qrcode';
 
+interface CompanyInfo {
+  name?: string | null;
+  tagline?: string | null;
+  address?: string | null;
+  email?: string | null;
+  phone?: string | null;
+  website?: string | null;
+  logoUrl?: string | null;
+}
+
 @Injectable()
 export class InvoiceService {
-  constructor(private readonly settingsService: SettingsService) { }
+  constructor(private readonly settingsService: SettingsService) {}
 
   async generateInvoice(order: Order): Promise<Buffer> {
     const browser = await puppeteer.launch({
@@ -27,16 +37,21 @@ export class InvoiceService {
       // Generate QR code linking to PUBLIC order details page (no auth required)
       const baseUrl = process.env.APP_URL;
       const orderDetailsUrl = `${baseUrl}/orders/public/${order.id}`;
-      const qrCodeDataUrl = await QRCode.toDataURL(orderDetailsUrl, {
+      const qrCodeDataUrl = (await QRCode.toDataURL(orderDetailsUrl, {
         width: 120,
         margin: 2,
         color: {
           dark: '#232f3e',
           light: '#ffffff',
         },
-      });
+      })) as string;
 
-      const htmlContent = this.generateInvoiceHTML(order, companyLogo.logoUrl, companyInfo, qrCodeDataUrl);
+      const htmlContent = this.generateInvoiceHTML(
+        order,
+        companyLogo.logoUrl,
+        companyInfo,
+        qrCodeDataUrl,
+      );
 
       await page.setContent(htmlContent, { waitUntil: 'networkidle0' });
 
@@ -57,26 +72,25 @@ export class InvoiceService {
     }
   }
 
-  private generateInvoiceHTML(order: Order, logoUrl: string, companyInfo: any, qrCodeDataUrl: string): string {
-    const orderDate = new Date(order.createdAt).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
-
+  private generateInvoiceHTML(
+    order: Order,
+    logoUrl: string,
+    companyInfo: CompanyInfo,
+    qrCodeDataUrl: string,
+  ): string {
     // Calculate due date (30 days from order date)
     const dueDate = new Date(order.createdAt);
     dueDate.setDate(dueDate.getDate() + 30);
     const dueDateStr = dueDate.toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'long',
-      day: 'numeric'
+      day: 'numeric',
     });
 
     const invoiceDate = new Date().toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'long',
-      day: 'numeric'
+      day: 'numeric',
     });
     const orderStatus = this.getOrderStatusText(order.status);
     const paymentMethod = this.getPaymentMethodText(order.paymentMethod);
@@ -86,12 +100,23 @@ export class InvoiceService {
     const logoConfig = {
       maxHeight: '120px',
       maxWidth: '400px',
-      fallbackText: 'Velora'
+      fallbackText: 'Velora',
     };
 
     // Build invoice sections
-    const headerSection = this.buildAmazonHeader(logoUrl, logoConfig, companyInfo);
-    const orderInfoBar = this.buildOrderInfoBar(order, invoiceNumber, invoiceDate, dueDateStr, paymentMethod, orderStatus);
+    const headerSection = this.buildAmazonHeader(
+      logoUrl,
+      logoConfig,
+      companyInfo,
+    );
+    const orderInfoBar = this.buildOrderInfoBar(
+      order,
+      invoiceNumber,
+      invoiceDate,
+      dueDateStr,
+      paymentMethod,
+      orderStatus,
+    );
     const addressSection = this.buildAddressSection(order, companyInfo);
     const itemsTable = this.buildItemsTable(order);
     const orderSummary = this.buildOrderSummary(order);
@@ -521,7 +546,11 @@ export class InvoiceService {
   }
 
   // New Amazon-style section builders
-  private buildAmazonHeader(logoUrl: string, logoConfig: any, companyInfo: any): string {
+  private buildAmazonHeader(
+    logoUrl: string,
+    logoConfig: any,
+    companyInfo: CompanyInfo,
+  ): string {
     const companyName = companyInfo?.name || 'Velora';
     const logoHtml = logoUrl
       ? `<img src="${logoUrl}" alt="${companyName}" onerror="this.style.display='none'; this.parentElement.innerHTML='<span class=\\'logo-text\\'>${companyName}</span>';" />`
@@ -537,7 +566,14 @@ export class InvoiceService {
     `;
   }
 
-  private buildOrderInfoBar(order: Order, invoiceNumber: string, invoiceDate: string, dueDate: string, paymentMethod: string, orderStatus: string): string {
+  private buildOrderInfoBar(
+    order: Order,
+    invoiceNumber: string,
+    invoiceDate: string,
+    dueDate: string,
+    paymentMethod: string,
+    orderStatus: string,
+  ): string {
     return `
       <div class="order-info-bar">
         <div class="order-info-row">
@@ -570,9 +606,11 @@ export class InvoiceService {
     `;
   }
 
-  private buildAddressSection(order: Order, companyInfo: any): string {
+  private buildAddressSection(order: Order, companyInfo: CompanyInfo): string {
     const sellerName = companyInfo?.name || 'Velora Inc.';
-    const sellerAddress = companyInfo?.address || '123 Business Avenue, Suite 100, New York, NY 10001';
+    const sellerAddress =
+      companyInfo?.address ||
+      '123 Business Avenue, Suite 100, New York, NY 10001';
     const sellerEmail = companyInfo?.email || 'contact@velora.com';
     const sellerPhone = companyInfo?.phone || '+1 (555) 123-4567';
 
@@ -609,13 +647,14 @@ export class InvoiceService {
   }
 
   private buildItemsTable(order: Order): string {
-    const itemsRows = order.items.map((item) => {
-      if (!item.product) return '';
-      const unitPrice = Number(item.price);
-      const quantity = item.quantity;
-      const total = unitPrice * quantity;
+    const itemsRows = order.items
+      .map((item) => {
+        if (!item.product) return '';
+        const unitPrice = Number(item.price);
+        const quantity = item.quantity;
+        const total = unitPrice * quantity;
 
-      return `
+        return `
         <tr>
           <td>
             <div class="product-info">
@@ -628,7 +667,8 @@ export class InvoiceService {
           <td style="text-align: right; font-weight: 600;">$${total.toFixed(2)}</td>
         </tr>
       `;
-    }).join('');
+      })
+      .join('');
 
     return `
       <div class="items-section">
@@ -679,7 +719,7 @@ export class InvoiceService {
     `;
   }
 
-  private buildNotesSection(companyInfo: any): string {
+  private buildNotesSection(companyInfo: CompanyInfo): string {
     const supportEmail = companyInfo?.email || 'support@velora.com';
     const supportPhone = companyInfo?.phone || '+1 (555) 123-4567';
 
@@ -692,9 +732,11 @@ export class InvoiceService {
     `;
   }
 
-  private buildAmazonFooter(companyInfo: any): string {
+  private buildAmazonFooter(companyInfo: CompanyInfo): string {
     const companyName = companyInfo?.name || 'Velora Inc.';
-    const address = companyInfo?.address || '123 Business Avenue, Suite 100, New York, NY 10001, United States';
+    const address =
+      companyInfo?.address ||
+      '123 Business Avenue, Suite 100, New York, NY 10001, United States';
     const email = companyInfo?.email || 'support@velora.com';
     const phone = companyInfo?.phone || '+1 (555) 123-4567';
     const website = companyInfo?.website || 'www.velora.com';

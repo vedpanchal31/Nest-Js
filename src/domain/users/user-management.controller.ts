@@ -31,7 +31,7 @@ import { UpdateManagedUserDto } from './dtos/update-managed-user.dto';
 @UseGuards(AuthGuard, RoleGuard)
 @ApiBearerAuth()
 export class UserManagementController {
-  constructor(private readonly usersService: UsersService) { }
+  constructor(private readonly usersService: UsersService) {}
 
   @Get()
   @RoutePermission(PermissionType.VIEW_USERS)

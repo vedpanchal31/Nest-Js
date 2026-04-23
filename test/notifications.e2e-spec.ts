@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ValidationPipe, CanActivate } from '@nestjs/common';
 import request from 'supertest';
@@ -7,7 +6,10 @@ import { UserType } from '../src/core/constants/app.constants';
 import { NotificationsController } from '../src/domain/notifications/notifications.controller';
 import { NotificationsService } from '../src/domain/notifications/notifications.service';
 import { AuthGuard } from '../src/core/guards/auth.guard';
-import { NotificationType, NotificationStatus } from '../src/domain/notifications/entities/notification.entity';
+import {
+  NotificationType,
+  NotificationStatus,
+} from '../src/domain/notifications/entities/notification.entity';
 
 describe('NotificationsController (e2e)', () => {
   let app: INestApplication<App>;
@@ -33,7 +35,9 @@ describe('NotificationsController (e2e)', () => {
       limit: 10,
       totalPages: 1,
     }),
-    processAction: jest.fn().mockResolvedValue({ message: 'Action completed successfully' }),
+    processAction: jest
+      .fn()
+      .mockResolvedValue({ message: 'Action completed successfully' }),
   };
 
   const mockAuthGuard: CanActivate = {
@@ -64,7 +68,9 @@ describe('NotificationsController (e2e)', () => {
       .compile();
 
     app = moduleFixture.createNestApplication();
-    app.useGlobalPipes(new ValidationPipe({ transform: true, whitelist: true }));
+    app.useGlobalPipes(
+      new ValidationPipe({ transform: true, whitelist: true }),
+    );
     await app.init();
   });
 
@@ -112,7 +118,9 @@ describe('NotificationsController (e2e)', () => {
 
     it('should override userId from query with token user id', async () => {
       await request(app.getHttpServer())
-        .get('/notifications?page=1&limit=10&userId=550e8400-e29b-41d4-a716-446655440099')
+        .get(
+          '/notifications?page=1&limit=10&userId=550e8400-e29b-41d4-a716-446655440099',
+        )
         .set('Authorization', 'Bearer mock-jwt-token')
         .expect(200);
 
@@ -127,14 +135,23 @@ describe('NotificationsController (e2e)', () => {
       const response = await request(app.getHttpServer())
         .patch('/notifications')
         .set('Authorization', 'Bearer mock-jwt-token')
-        .send({ type: 1, ids: ['550e8400-e29b-41d4-a716-446655440001', '550e8400-e29b-41d4-a716-446655440002'] })
+        .send({
+          type: 1,
+          ids: [
+            '550e8400-e29b-41d4-a716-446655440001',
+            '550e8400-e29b-41d4-a716-446655440002',
+          ],
+        })
         .expect(200);
 
       expect(response.body.message).toBe('Action completed successfully');
       expect(mockNotificationsService.processAction).toHaveBeenCalledWith(
         'user-uuid',
         1,
-        ['550e8400-e29b-41d4-a716-446655440001', '550e8400-e29b-41d4-a716-446655440002'],
+        [
+          '550e8400-e29b-41d4-a716-446655440001',
+          '550e8400-e29b-41d4-a716-446655440002',
+        ],
       );
     });
 

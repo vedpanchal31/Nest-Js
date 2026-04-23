@@ -8,9 +8,14 @@ import { RolesModule } from '../roles/roles.module';
 import { Settings } from './entities/settings.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Settings]), CloudinaryModule, AuthModule, RolesModule],
+  imports: [
+    TypeOrmModule.forFeature([Settings]),
+    CloudinaryModule,
+    AuthModule,
+    RolesModule,
+  ],
   controllers: [SettingsController],
   providers: [SettingsService],
   exports: [SettingsService],
 })
-export class SettingsModule { }
+export class SettingsModule {}

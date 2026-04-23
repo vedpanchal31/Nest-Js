@@ -27,4 +27,4 @@ import { EmailTemplateService } from './email-template.service';
   providers: [EmailTemplateService],
   exports: [MailerModule, EmailTemplateService],
 })
-export class MailerGlobalModule { }
+export class MailerGlobalModule {}

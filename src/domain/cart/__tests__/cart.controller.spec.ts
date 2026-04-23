@@ -35,8 +35,12 @@ describe('CartController - Comprehensive', () => {
       currentPage: 1,
     }),
     addToCart: jest.fn().mockResolvedValue(mockCartItem),
-    updateCartQuantity: jest.fn().mockResolvedValue({ ...mockCartItem, quantity: 5 }),
-    removeItem: jest.fn().mockResolvedValue({ message: 'Item removed successfully' }),
+    updateCartQuantity: jest
+      .fn()
+      .mockResolvedValue({ ...mockCartItem, quantity: 5 }),
+    removeItem: jest
+      .fn()
+      .mockResolvedValue({ message: 'Item removed successfully' }),
     clearCart: jest.fn().mockResolvedValue({ affected: 1 }),
   };
 
@@ -62,25 +66,29 @@ describe('CartController - Comprehensive', () => {
 
   describe('getCart - Query Parameter Validation', () => {
     it('should call service with default pagination values', async () => {
-      await controller.getCart({ user: mockUserToken } as any, 1, 10);
+      await controller.getCart({ user: mockUserToken }, 1, 10);
 
       expect(service.getCart).toHaveBeenCalledWith('user-uuid', 1, 10);
     });
 
     it('should pass custom pagination values to service', async () => {
-      await controller.getCart({ user: mockUserToken } as any, 2, 20);
+      await controller.getCart({ user: mockUserToken }, 2, 20);
 
       expect(service.getCart).toHaveBeenCalledWith('user-uuid', 2, 20);
     });
 
     it('should extract user id from token', async () => {
-      await controller.getCart({ user: { id: 'different-user' } } as any, 1, 10);
+      await controller.getCart(
+        { user: { id: 'different-user' } } as any,
+        1,
+        10,
+      );
 
       expect(service.getCart).toHaveBeenCalledWith('different-user', 1, 10);
     });
 
     it('should return paginated cart data', async () => {
-      const result = await controller.getCart({ user: mockUserToken } as any, 1, 10);
+      const result = await controller.getCart({ user: mockUserToken }, 1, 10);
 
       expect(result).toHaveProperty('data');
       expect(result).toHaveProperty('totalItems');
@@ -93,7 +101,7 @@ describe('CartController - Comprehensive', () => {
     it('should successfully add item to cart', async () => {
       const dto = { productId: 'product-uuid', quantity: 2 };
 
-      const result = await controller.addToCart({ user: mockUserToken } as any, dto);
+      const result = await controller.addToCart({ user: mockUserToken }, dto);
 
       expect(result).toEqual(mockCartItem);
       expect(service.addToCart).toHaveBeenCalledWith('user-uuid', dto);
@@ -108,20 +116,25 @@ describe('CartController - Comprehensive', () => {
     });
 
     it('should pass dto with productId to service', async () => {
-      const dto = { productId: '550e8400-e29b-41d4-a716-446655440000', quantity: 3 };
+      const dto = {
+        productId: '550e8400-e29b-41d4-a716-446655440000',
+        quantity: 3,
+      };
 
-      await controller.addToCart({ user: mockUserToken } as any, dto);
+      await controller.addToCart({ user: mockUserToken }, dto);
 
       expect(service.addToCart).toHaveBeenCalledWith(
         'user-uuid',
-        expect.objectContaining({ productId: '550e8400-e29b-41d4-a716-446655440000' }),
+        expect.objectContaining({
+          productId: '550e8400-e29b-41d4-a716-446655440000',
+        }),
       );
     });
 
     it('should pass dto with quantity to service', async () => {
       const dto = { productId: 'product-uuid', quantity: 5 };
 
-      await controller.addToCart({ user: mockUserToken } as any, dto);
+      await controller.addToCart({ user: mockUserToken }, dto);
 
       expect(service.addToCart).toHaveBeenCalledWith(
         'user-uuid',
@@ -135,7 +148,7 @@ describe('CartController - Comprehensive', () => {
       const dto = { quantity: 5 };
 
       await controller.updateCartQuantity(
-        { user: mockUserToken } as any,
+        { user: mockUserToken },
         'cart-item-uuid',
         dto,
       );
@@ -167,7 +180,7 @@ describe('CartController - Comprehensive', () => {
       const dto = { quantity: 10 };
 
       await controller.updateCartQuantity(
-        { user: mockUserToken } as any,
+        { user: mockUserToken },
         'cart-item-uuid',
         dto,
       );
@@ -183,7 +196,7 @@ describe('CartController - Comprehensive', () => {
       const dto = { quantity: 5 };
 
       const result = await controller.updateCartQuantity(
-        { user: mockUserToken } as any,
+        { user: mockUserToken },
         'cart-item-uuid',
         dto,
       );
@@ -194,20 +207,26 @@ describe('CartController - Comprehensive', () => {
 
   describe('removeItem - Route Parameter Validation', () => {
     it('should pass correct cart item id to service', async () => {
-      await controller.removeItem({ user: mockUserToken } as any, 'cart-item-uuid');
+      await controller.removeItem({ user: mockUserToken }, 'cart-item-uuid');
 
-      expect(service.removeItem).toHaveBeenCalledWith('user-uuid', 'cart-item-uuid');
+      expect(service.removeItem).toHaveBeenCalledWith(
+        'user-uuid',
+        'cart-item-uuid',
+      );
     });
 
     it('should pass user id from token for authorization', async () => {
-      await controller.removeItem({ user: { id: 'auth-user' } } as any, 'item-id');
+      await controller.removeItem(
+        { user: { id: 'auth-user' } } as any,
+        'item-id',
+      );
 
       expect(service.removeItem).toHaveBeenCalledWith('auth-user', 'item-id');
     });
 
     it('should return success message', async () => {
       const result = await controller.removeItem(
-        { user: mockUserToken } as any,
+        { user: mockUserToken },
         'cart-item-uuid',
       );
 
@@ -216,7 +235,7 @@ describe('CartController - Comprehensive', () => {
 
     it('should handle any id format (validation at service level)', async () => {
       const customId = 'custom-cart-item-id';
-      await controller.removeItem({ user: mockUserToken } as any, customId);
+      await controller.removeItem({ user: mockUserToken }, customId);
 
       expect(service.removeItem).toHaveBeenCalledWith('user-uuid', customId);
     });
@@ -224,7 +243,7 @@ describe('CartController - Comprehensive', () => {
 
   describe('clearCart - User Authorization', () => {
     it('should clear cart for authenticated user', async () => {
-      await controller.clearCart({ user: mockUserToken } as any);
+      await controller.clearCart({ user: mockUserToken });
 
       expect(service.clearCart).toHaveBeenCalledWith('user-uuid');
     });
@@ -236,7 +255,7 @@ describe('CartController - Comprehensive', () => {
     });
 
     it('should return deletion result', async () => {
-      const result = await controller.clearCart({ user: mockUserToken } as any);
+      const result = await controller.clearCart({ user: mockUserToken });
 
       expect(result).toEqual({ affected: 1 });
     });

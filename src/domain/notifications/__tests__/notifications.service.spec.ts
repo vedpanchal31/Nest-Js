@@ -1,7 +1,11 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { NotificationsService } from '../notifications.service';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { Notification, NotificationStatus, NotificationType } from '../entities/notification.entity';
+import {
+  Notification,
+  NotificationStatus,
+  NotificationType,
+} from '../entities/notification.entity';
 import { Repository } from 'typeorm';
 import { NotFoundException } from '@nestjs/common';
 
@@ -90,7 +94,11 @@ describe('NotificationsService - Comprehensive', () => {
       const orderId = '550e8400-e29b-41d4-a716-446655440000';
       const amount = 99.99;
 
-      const result = await service.createPaymentSuccessNotification(userId, orderId, amount);
+      const result = await service.createPaymentSuccessNotification(
+        userId,
+        orderId,
+        amount,
+      );
 
       expect(notificationRepository.create).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -113,7 +121,11 @@ describe('NotificationsService - Comprehensive', () => {
     });
 
     it('should format amount with 2 decimal places', async () => {
-      await service.createPaymentSuccessNotification('user-uuid', 'order-uuid', 99.9);
+      await service.createPaymentSuccessNotification(
+        'user-uuid',
+        'order-uuid',
+        99.9,
+      );
 
       const createCall = notificationRepository.create.mock.calls[0][0];
       expect(createCall.message).toContain('$99.90');
@@ -146,7 +158,12 @@ describe('NotificationsService - Comprehensive', () => {
       const message = 'Get 50% off on all products';
       const actionUrl = '/sale';
 
-      await service.createPromotionNotification(userId, title, message, actionUrl);
+      await service.createPromotionNotification(
+        userId,
+        title,
+        message,
+        actionUrl,
+      );
 
       expect(notificationRepository.create).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -160,7 +177,11 @@ describe('NotificationsService - Comprehensive', () => {
     });
 
     it('should use default actionUrl when not provided', async () => {
-      await service.createPromotionNotification('user-uuid', 'Title', 'Message');
+      await service.createPromotionNotification(
+        'user-uuid',
+        'Title',
+        'Message',
+      );
 
       const createCall = notificationRepository.create.mock.calls[0][0];
       expect(createCall.actionUrl).toBe('/promotions');
@@ -169,7 +190,10 @@ describe('NotificationsService - Comprehensive', () => {
 
   describe('findAll - Query and Pagination', () => {
     it('should return paginated notifications', async () => {
-      notificationRepository.findAndCount.mockResolvedValue([[mockNotification], 1]);
+      notificationRepository.findAndCount.mockResolvedValue([
+        [mockNotification],
+        1,
+      ]);
       const query = { page: 1, limit: 10 };
 
       const result = await service.findAll(query);
@@ -182,7 +206,10 @@ describe('NotificationsService - Comprehensive', () => {
     });
 
     it('should filter by userId', async () => {
-      notificationRepository.findAndCount.mockResolvedValue([[mockNotification], 1]);
+      notificationRepository.findAndCount.mockResolvedValue([
+        [mockNotification],
+        1,
+      ]);
       const query = { userId: 'specific-user', page: 1, limit: 10 };
 
       await service.findAll(query);
@@ -195,7 +222,10 @@ describe('NotificationsService - Comprehensive', () => {
     });
 
     it('should filter by type', async () => {
-      notificationRepository.findAndCount.mockResolvedValue([[mockNotification], 1]);
+      notificationRepository.findAndCount.mockResolvedValue([
+        [mockNotification],
+        1,
+      ]);
       const query = { type: NotificationType.ORDER, page: 1, limit: 10 };
 
       await service.findAll(query);
@@ -208,7 +238,10 @@ describe('NotificationsService - Comprehensive', () => {
     });
 
     it('should filter by isRead status', async () => {
-      notificationRepository.findAndCount.mockResolvedValue([[mockNotification], 1]);
+      notificationRepository.findAndCount.mockResolvedValue([
+        [mockNotification],
+        1,
+      ]);
       const query = { isRead: false, page: 1, limit: 10 };
 
       await service.findAll(query);
@@ -221,8 +254,16 @@ describe('NotificationsService - Comprehensive', () => {
     });
 
     it('should apply date range filter', async () => {
-      notificationRepository.findAndCount.mockResolvedValue([[mockNotification], 1]);
-      const query = { fromDate: '2024-01-01', toDate: '2024-12-31', page: 1, limit: 10 };
+      notificationRepository.findAndCount.mockResolvedValue([
+        [mockNotification],
+        1,
+      ]);
+      const query = {
+        fromDate: '2024-01-01',
+        toDate: '2024-12-31',
+        page: 1,
+        limit: 10,
+      };
 
       await service.findAll(query);
 
@@ -239,7 +280,10 @@ describe('NotificationsService - Comprehensive', () => {
     });
 
     it('should use default pagination when not provided', async () => {
-      notificationRepository.findAndCount.mockResolvedValue([[mockNotification], 1]);
+      notificationRepository.findAndCount.mockResolvedValue([
+        [mockNotification],
+        1,
+      ]);
       const query = {};
 
       const result = await service.findAll(query);
@@ -249,7 +293,10 @@ describe('NotificationsService - Comprehensive', () => {
     });
 
     it('should include user relation', async () => {
-      notificationRepository.findAndCount.mockResolvedValue([[mockNotification], 1]);
+      notificationRepository.findAndCount.mockResolvedValue([
+        [mockNotification],
+        1,
+      ]);
       const query = { page: 1, limit: 10 };
 
       await service.findAll(query);
@@ -348,7 +395,11 @@ describe('NotificationsService - Comprehensive', () => {
 
       expect(notificationRepository.update).toHaveBeenCalledWith(
         { userId: 'user-uuid', isRead: false },
-        { isRead: true, status: NotificationStatus.READ, readAt: expect.any(Date) },
+        {
+          isRead: true,
+          status: NotificationStatus.READ,
+          readAt: expect.any(Date),
+        },
       );
     });
   });
@@ -362,9 +413,13 @@ describe('NotificationsService - Comprehensive', () => {
       });
       notificationRepository.save = saveSpy;
 
-      await service.update('notification-uuid', { title: 'Updated Title' } as any);
+      await service.update('notification-uuid', {
+        title: 'Updated Title',
+      });
 
-      expect(saveSpy).toHaveBeenCalledWith(expect.objectContaining({ title: 'Updated Title' }));
+      expect(saveSpy).toHaveBeenCalledWith(
+        expect.objectContaining({ title: 'Updated Title' }),
+      );
     });
 
     it('should throw NotFoundException when notification not found', async () => {
@@ -380,11 +435,16 @@ describe('NotificationsService - Comprehensive', () => {
     it('should delete notification by id', async () => {
       await service.remove('notification-uuid');
 
-      expect(notificationRepository.delete).toHaveBeenCalledWith('notification-uuid');
+      expect(notificationRepository.delete).toHaveBeenCalledWith(
+        'notification-uuid',
+      );
     });
 
     it('should throw NotFoundException when notification not found', async () => {
-      notificationRepository.delete.mockResolvedValue({ affected: 0, raw: [] } as any);
+      notificationRepository.delete.mockResolvedValue({
+        affected: 0,
+        raw: [],
+      });
 
       await expect(service.remove('non-existent')).rejects.toThrow(
         NotFoundException,
@@ -396,16 +456,25 @@ describe('NotificationsService - Comprehensive', () => {
     it('should mark notifications as read (type 1)', async () => {
       notificationRepository.findOne.mockResolvedValue(mockNotification);
 
-      const result = await service.processAction('user-uuid', 1, ['notif-1', 'notif-2']);
+      const result = await service.processAction('user-uuid', 1, [
+        'notif-1',
+        'notif-2',
+      ]);
 
       expect(result.message).toBe('2 notification(s) marked as read');
     });
 
     it('should delete notifications (type 2)', async () => {
       // Reset mock to return success
-      notificationRepository.delete.mockResolvedValue({ affected: 1, raw: [] } as any);
+      notificationRepository.delete.mockResolvedValue({
+        affected: 1,
+        raw: [],
+      });
 
-      const result = await service.processAction('user-uuid', 2, ['notif-1', 'notif-2']);
+      const result = await service.processAction('user-uuid', 2, [
+        'notif-1',
+        'notif-2',
+      ]);
 
       expect(result.message).toBe('2 notification(s) deleted');
       expect(notificationRepository.delete).toHaveBeenCalledTimes(2);
@@ -415,7 +484,9 @@ describe('NotificationsService - Comprehensive', () => {
       const result = await service.processAction('user-uuid', 3);
 
       expect(result.message).toBe('All notifications deleted');
-      expect(notificationRepository.delete).toHaveBeenCalledWith({ userId: 'user-uuid' });
+      expect(notificationRepository.delete).toHaveBeenCalledWith({
+        userId: 'user-uuid',
+      });
     });
 
     it('should mark all as read (type 4)', async () => {
@@ -424,7 +495,11 @@ describe('NotificationsService - Comprehensive', () => {
       expect(result.message).toBe('All notifications marked as read');
       expect(notificationRepository.update).toHaveBeenCalledWith(
         { userId: 'user-uuid', isRead: false },
-        { isRead: true, status: NotificationStatus.READ, readAt: expect.any(Date) },
+        {
+          isRead: true,
+          status: NotificationStatus.READ,
+          readAt: expect.any(Date),
+        },
       );
     });
 
@@ -451,7 +526,9 @@ describe('NotificationsService - Comprehensive', () => {
     it('should delete all notifications for user', async () => {
       await service.removeAllByUser('user-uuid');
 
-      expect(notificationRepository.delete).toHaveBeenCalledWith({ userId: 'user-uuid' });
+      expect(notificationRepository.delete).toHaveBeenCalledWith({
+        userId: 'user-uuid',
+      });
     });
   });
 });

@@ -21,4 +21,4 @@ import { BulkUploadModule } from 'src/core/bulk-upload/bulk-upload.module';
   providers: [CategoriesService],
   exports: [CategoriesService],
 })
-export class CategoriesModule { }
+export class CategoriesModule {}

@@ -4,6 +4,7 @@ import { CartItem } from './entities/cart-item.entity';
 import { Repository } from 'typeorm';
 import { Product } from '../products/entities/product.entity';
 import { AddToCartDto, UpdateCartDto } from './dtos/cart.dto';
+import { ProductsService } from '../products/products.service';
 
 @Injectable()
 export class CartService {
@@ -13,6 +14,8 @@ export class CartService {
 
     @InjectRepository(Product)
     private readonly productRepository: Repository<Product>,
+
+    private readonly productsService: ProductsService,
   ) {}
 
   async getCart(userId: string, page: number, limit: number) {
@@ -44,12 +47,24 @@ export class CartService {
       throw new NotFoundException('Product not found');
     }
 
+    // Check stock availability
+    await this.productsService.checkStockAvailability(
+      dto.productId,
+      dto.quantity,
+    );
+
     let cartItem = await this.cartRepository.findOne({
       where: { user: { id: userId }, product: { id: dto.productId } },
     });
 
     if (cartItem) {
-      cartItem.quantity += dto.quantity;
+      const newQuantity = cartItem.quantity + dto.quantity;
+      // Check stock availability for updated quantity
+      await this.productsService.checkStockAvailability(
+        dto.productId,
+        newQuantity,
+      );
+      cartItem.quantity = newQuantity;
     } else {
       cartItem = this.cartRepository.create({
         user: { id: userId },
@@ -68,11 +83,18 @@ export class CartService {
   ) {
     const cartItem = await this.cartRepository.findOne({
       where: { id: cartItemId, user: { id: userId } },
+      relations: ['product'],
     });
 
     if (!cartItem) {
       throw new NotFoundException('Cart item not found');
     }
+
+    // Check stock availability for updated quantity
+    await this.productsService.checkStockAvailability(
+      cartItem.product.id,
+      dto.quantity,
+    );
 
     cartItem.quantity = dto.quantity;
     return await this.cartRepository.save(cartItem);

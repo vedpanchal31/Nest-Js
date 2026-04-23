@@ -24,7 +24,10 @@
     "migration:run": "npm run typeorm -- migration:run -d src/database/data-source.ts",
     "migration:revert": "npm run typeorm -- migration:revert -d src/database/data-source.ts",
     "seed:admin": "ts-node -r tsconfig-paths/register src/database/seeders/admin.seeder.ts",
-    "seed:permissions": "ts-node -r tsconfig-paths/register src/database/seeders/permission.seeder.ts"
+    "seed:permissions": "ts-node -r tsconfig-paths/register src/database/seeders/permission.seeder.ts",
+    "seed:comprehensive": "ts-node -r tsconfig-paths/register src/database/seeders/comprehensive.seeder.ts",
+    "seed:clear": "ts-node -r tsconfig-paths/register src/database/seeders/clear-data.seeder.ts",
+    "get:uuids": "ts-node -r tsconfig-paths/register src/scripts/get-uuids.ts"
   },
   "dependencies": {
     "@nestjs-modules/mailer": "^2.0.2",

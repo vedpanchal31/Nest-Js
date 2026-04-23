@@ -54,7 +54,9 @@ describe('OrdersController - Comprehensive', () => {
       status: 1,
       totalAmount: 199.98,
     }),
-    renderOrderDetailsHTML: jest.fn().mockReturnValue('<html>Order Details</html>'),
+    renderOrderDetailsHTML: jest
+      .fn()
+      .mockReturnValue('<html>Order Details</html>'),
   };
 
   beforeEach(async () => {
@@ -90,16 +92,28 @@ describe('OrdersController - Comprehensive', () => {
         paymentMethod: 1,
       };
 
-      const result = await controller.createOrder({ user: mockUserToken } as any, dto as any);
+      const result = await controller.createOrder({ user: mockUserToken }, dto);
 
       expect(result).toEqual(mockOrder);
       expect(service.createOrder).toHaveBeenCalledWith('user-uuid', dto);
     });
 
     it('should pass user id from token', async () => {
-      const dto = { addressLine1: 'Test', city: 'City', state: 'ST', region: 'Region', country: 'Country', latitude: 0, longitude: 0, paymentMethod: 1 };
+      const dto = {
+        addressLine1: 'Test',
+        city: 'City',
+        state: 'ST',
+        region: 'Region',
+        country: 'Country',
+        latitude: 0,
+        longitude: 0,
+        paymentMethod: 1,
+      };
 
-      await controller.createOrder({ user: { id: 'different-user' } } as any, dto as any);
+      await controller.createOrder(
+        { user: { id: 'different-user' } } as any,
+        dto,
+      );
 
       expect(service.createOrder).toHaveBeenCalledWith('different-user', dto);
     });
@@ -107,19 +121,23 @@ describe('OrdersController - Comprehensive', () => {
 
   describe('getAllOrders - Query Parameter Validation', () => {
     it('should call service with default pagination', async () => {
-      await controller.getAllOrders({ user: mockUserToken } as any, 1, 10);
+      await controller.getAllOrders({ user: mockUserToken }, 1, 10);
 
       expect(service.getAllOrders).toHaveBeenCalledWith('user-uuid', 1, 10);
     });
 
     it('should pass custom pagination values', async () => {
-      await controller.getAllOrders({ user: mockUserToken } as any, 2, 20);
+      await controller.getAllOrders({ user: mockUserToken }, 2, 20);
 
       expect(service.getAllOrders).toHaveBeenCalledWith('user-uuid', 2, 20);
     });
 
     it('should return paginated orders', async () => {
-      const result = await controller.getAllOrders({ user: mockUserToken } as any, 1, 10);
+      const result = await controller.getAllOrders(
+        { user: mockUserToken },
+        1,
+        10,
+      );
 
       expect(result).toHaveProperty('data');
       expect(result).toHaveProperty('total');
@@ -131,19 +149,31 @@ describe('OrdersController - Comprehensive', () => {
 
   describe('getOrderSummary - Route Parameter', () => {
     it('should pass order id to service', async () => {
-      await controller.getOrderSummary({ user: mockUserToken } as any, 'order-uuid');
+      await controller.getOrderSummary({ user: mockUserToken }, 'order-uuid');
 
-      expect(service.getOrderSummary).toHaveBeenCalledWith('order-uuid', 'user-uuid');
+      expect(service.getOrderSummary).toHaveBeenCalledWith(
+        'order-uuid',
+        'user-uuid',
+      );
     });
 
     it('should pass user id for authorization', async () => {
-      await controller.getOrderSummary({ user: { id: 'auth-user' } } as any, 'order-uuid');
+      await controller.getOrderSummary(
+        { user: { id: 'auth-user' } } as any,
+        'order-uuid',
+      );
 
-      expect(service.getOrderSummary).toHaveBeenCalledWith('order-uuid', 'auth-user');
+      expect(service.getOrderSummary).toHaveBeenCalledWith(
+        'order-uuid',
+        'auth-user',
+      );
     });
 
     it('should return order details', async () => {
-      const result = await controller.getOrderSummary({ user: mockUserToken } as any, 'order-uuid');
+      const result = await controller.getOrderSummary(
+        { user: mockUserToken },
+        'order-uuid',
+      );
 
       expect(result).toEqual(mockOrder);
     });
@@ -151,13 +181,19 @@ describe('OrdersController - Comprehensive', () => {
 
   describe('cancelOrder - Route Parameter', () => {
     it('should pass order id to service', async () => {
-      await controller.cancelOrder({ user: mockUserToken } as any, 'order-uuid');
+      await controller.cancelOrder({ user: mockUserToken }, 'order-uuid');
 
-      expect(service.cancelOrder).toHaveBeenCalledWith('order-uuid', 'user-uuid');
+      expect(service.cancelOrder).toHaveBeenCalledWith(
+        'order-uuid',
+        'user-uuid',
+      );
     });
 
     it('should return cancelled order', async () => {
-      const result = await controller.cancelOrder({ user: mockUserToken } as any, 'order-uuid');
+      const result = await controller.cancelOrder(
+        { user: mockUserToken },
+        'order-uuid',
+      );
 
       expect(result.status).toBe(5);
     });
@@ -173,7 +209,11 @@ describe('OrdersController - Comprehensive', () => {
         json: jest.fn(),
       } as any;
 
-      await controller.downloadInvoice({ user: mockUserToken } as any, 'order-uuid', mockRes);
+      await controller.downloadInvoice(
+        { user: mockUserToken },
+        'order-uuid',
+        mockRes,
+      );
 
       expect(mockRes.status).toHaveBeenCalledWith(400);
       expect(mockRes.json).toHaveBeenCalledWith({
@@ -186,7 +226,9 @@ describe('OrdersController - Comprehensive', () => {
   describe('getPublicOrderDetails - Public Order Page', () => {
     it('should return public order details HTML', async () => {
       service.getPublicOrderDetails.mockResolvedValue(mockOrder);
-      service.renderOrderDetailsHTML.mockReturnValue('<html>Order Details</html>');
+      service.renderOrderDetailsHTML.mockReturnValue(
+        '<html>Order Details</html>',
+      );
 
       const mockRes = {
         setHeader: jest.fn().mockReturnThis(),
@@ -197,7 +239,10 @@ describe('OrdersController - Comprehensive', () => {
 
       expect(service.getPublicOrderDetails).toHaveBeenCalledWith('order-uuid');
       expect(service.renderOrderDetailsHTML).toHaveBeenCalledWith(mockOrder);
-      expect(mockRes.setHeader).toHaveBeenCalledWith('Content-Type', 'text/html');
+      expect(mockRes.setHeader).toHaveBeenCalledWith(
+        'Content-Type',
+        'text/html',
+      );
       expect(mockRes.send).toHaveBeenCalledWith('<html>Order Details</html>');
     });
   });

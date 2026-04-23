@@ -53,7 +53,8 @@ export class CreateSettingsTable1774345000000 implements MigrationInterface {
             name: 'logoUrl',
             type: 'varchar',
             length: '500',
-            default: "'https://res.cloudinary.com/dcegoonge/image/upload/v1774418520/company-logo/hugpvjg6op8enixjsrhk.png'",
+            default:
+              "'https://res.cloudinary.com/dcegoonge/image/upload/v1774418520/company-logo/hugpvjg6op8enixjsrhk.png'",
           },
           {
             name: 'createdAt',

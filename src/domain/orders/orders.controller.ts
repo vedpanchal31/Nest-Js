@@ -31,7 +31,7 @@ import { Public } from '../../core/decorators/public.decorator';
 @UseGuards(AuthGuard)
 @Controller('orders')
 export class OrdersController {
-  constructor(private readonly ordersService: OrderService) { }
+  constructor(private readonly ordersService: OrderService) {}
 
   @Post()
   @ApiOperation({ summary: 'Place an order' })
@@ -107,5 +107,4 @@ export class OrdersController {
     res.setHeader('Content-Type', 'text/html');
     res.send(html);
   }
-
 }

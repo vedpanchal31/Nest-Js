@@ -101,11 +101,20 @@ describe('UsersService', () => {
       const result = await service.getAllUsers(1, 10);
 
       expect(usersRepository.createQueryBuilder).toHaveBeenCalledWith('user');
-      expect(mockQueryBuilder.leftJoinAndSelect).toHaveBeenCalledWith('user.profile', 'profile');
-      expect(mockQueryBuilder.leftJoinAndSelect).toHaveBeenCalledWith('user.roles', 'roles');
+      expect(mockQueryBuilder.leftJoinAndSelect).toHaveBeenCalledWith(
+        'user.profile',
+        'profile',
+      );
+      expect(mockQueryBuilder.leftJoinAndSelect).toHaveBeenCalledWith(
+        'user.roles',
+        'roles',
+      );
       expect(mockQueryBuilder.skip).toHaveBeenCalledWith(0);
       expect(mockQueryBuilder.take).toHaveBeenCalledWith(10);
-      expect(mockQueryBuilder.orderBy).toHaveBeenCalledWith('user.createdAt', 'DESC');
+      expect(mockQueryBuilder.orderBy).toHaveBeenCalledWith(
+        'user.createdAt',
+        'DESC',
+      );
       expect(result).toEqual({
         users: [mockUser],
         total: 1,
@@ -155,7 +164,9 @@ describe('UsersService', () => {
     it('should throw NotFoundException when user not found', async () => {
       usersRepository.findOne.mockResolvedValue(null);
 
-      await expect(service.findOne('non-existent-id')).rejects.toThrow(NotFoundException);
+      await expect(service.findOne('non-existent-id')).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 
@@ -235,9 +246,9 @@ describe('UsersService', () => {
     it('should throw NotFoundException when user not found', async () => {
       usersRepository.findOne.mockResolvedValue(null);
 
-      await expect(service.updateProfile('non-existent-id', updateProfileDto)).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(
+        service.updateProfile('non-existent-id', updateProfileDto),
+      ).rejects.toThrow(NotFoundException);
     });
 
     it('should convert dateOfBirth string to Date object', async () => {
@@ -251,7 +262,9 @@ describe('UsersService', () => {
       });
       usersRepository.save = saveSpy;
 
-      await service.updateProfile(mockUser.id, { dateOfBirth: '1995-05-15' } as any);
+      await service.updateProfile(mockUser.id, {
+        dateOfBirth: '1995-05-15',
+      } as any);
 
       const savedUser = saveSpy.mock.calls[0][0];
       expect(savedUser.profile.dateOfBirth).toBeInstanceOf(Date);
@@ -271,7 +284,9 @@ describe('UsersService', () => {
     it('should throw NotFoundException when user not found', async () => {
       usersRepository.findOne.mockResolvedValue(null);
 
-      await expect(service.removeUser('non-existent-id')).rejects.toThrow(NotFoundException);
+      await expect(service.removeUser('non-existent-id')).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 });

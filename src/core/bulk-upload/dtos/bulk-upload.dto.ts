@@ -22,8 +22,8 @@ export class BulkUploadDto {
 
 export interface BulkCategoryRow {
   'Name*': string;
-  'Description': string;
-  'Image': string;
+  Description: string;
+  Image: string;
 }
 
 export interface BulkProductRow {
@@ -31,5 +31,5 @@ export interface BulkProductRow {
   'Description*': string;
   'Price*': number | string;
   'Category*': string;
-  'Images': string;
+  Images: string;
 }

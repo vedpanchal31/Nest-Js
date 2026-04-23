@@ -29,7 +29,8 @@ describe('SettingsController - Comprehensive', () => {
     email: 'contact@velora.com',
     phone: '+1 (555) 123-4567',
     website: 'https://velora.com',
-    logoUrl: 'https://res.cloudinary.com/dcegoonge/image/upload/v1774418520/company-logo/logo.png',
+    logoUrl:
+      'https://res.cloudinary.com/dcegoonge/image/upload/v1774418520/company-logo/logo.png',
     updatedAt: new Date(),
   };
 
@@ -40,13 +41,15 @@ describe('SettingsController - Comprehensive', () => {
     }),
     uploadCompanyLogo: jest.fn().mockResolvedValue({
       message: 'Company logo uploaded successfully',
-      logoUrl: 'https://res.cloudinary.com/dcegoonge/image/upload/v1774418520/company-logo/new-logo.png',
+      logoUrl:
+        'https://res.cloudinary.com/dcegoonge/image/upload/v1774418520/company-logo/new-logo.png',
       publicId: 'company-logo/new-logo',
       updatedAt: new Date(),
     }),
     updateCompanyLogo: jest.fn().mockResolvedValue({
       message: 'Company logo updated successfully',
-      logoUrl: 'https://res.cloudinary.com/dcegoonge/image/upload/v1774418520/company-logo/updated-logo.png',
+      logoUrl:
+        'https://res.cloudinary.com/dcegoonge/image/upload/v1774418520/company-logo/updated-logo.png',
       publicId: 'company-logo/updated-logo',
       updatedAt: new Date(),
     }),
@@ -101,18 +104,28 @@ describe('SettingsController - Comprehensive', () => {
 
   describe('uploadCompanyLogo - Admin Only', () => {
     it('should upload logo with file', async () => {
-      const mockFile = { originalname: 'logo.png', buffer: Buffer.from('test') } as any;
+      const mockFile = {
+        originalname: 'logo.png',
+        buffer: Buffer.from('test'),
+      } as any;
 
       const result = await controller.uploadCompanyLogo(mockFile);
 
       expect(service.uploadCompanyLogo).toHaveBeenCalledWith(mockFile);
-      expect(result).toHaveProperty('message', 'Company logo uploaded successfully');
+      expect(result).toHaveProperty(
+        'message',
+        'Company logo uploaded successfully',
+      );
       expect(result).toHaveProperty('logoUrl');
       expect(result).toHaveProperty('publicId');
     });
 
     it('should handle file upload', async () => {
-      const mockFile = { originalname: 'logo.jpg', mimetype: 'image/jpeg', size: 1024 } as any;
+      const mockFile = {
+        originalname: 'logo.jpg',
+        mimetype: 'image/jpeg',
+        size: 1024,
+      } as any;
 
       await controller.uploadCompanyLogo(mockFile);
 
@@ -122,7 +135,10 @@ describe('SettingsController - Comprehensive', () => {
 
   describe('updateCompanyLogo - Admin Only', () => {
     it('should update logo with file', async () => {
-      const mockFile = { originalname: 'new-logo.png', buffer: Buffer.from('test') } as any;
+      const mockFile = {
+        originalname: 'new-logo.png',
+        buffer: Buffer.from('test'),
+      } as any;
 
       const result = await controller.updateCompanyLogo(mockFile);
 
@@ -151,7 +167,7 @@ describe('SettingsController - Comprehensive', () => {
     it('should update company name', async () => {
       const updateData = { name: 'New Company Name' };
 
-      const result = await controller.updateCompanyInfo(updateData as any);
+      const result = await controller.updateCompanyInfo(updateData);
 
       expect(service.updateCompanyInfo).toHaveBeenCalledWith(updateData);
       expect(result.message).toBe('Company information updated successfully');
@@ -164,7 +180,7 @@ describe('SettingsController - Comprehensive', () => {
         phone: '+1 999 888 7777',
       };
 
-      await controller.updateCompanyInfo(updateData as any);
+      await controller.updateCompanyInfo(updateData);
 
       expect(service.updateCompanyInfo).toHaveBeenCalledWith(updateData);
     });
@@ -172,7 +188,7 @@ describe('SettingsController - Comprehensive', () => {
     it('should update tagline', async () => {
       const updateData = { tagline: 'New Tagline' };
 
-      await controller.updateCompanyInfo(updateData as any);
+      await controller.updateCompanyInfo(updateData);
 
       expect(service.updateCompanyInfo).toHaveBeenCalledWith(updateData);
     });
@@ -180,7 +196,7 @@ describe('SettingsController - Comprehensive', () => {
     it('should update address', async () => {
       const updateData = { address: 'New Address' };
 
-      await controller.updateCompanyInfo(updateData as any);
+      await controller.updateCompanyInfo(updateData);
 
       expect(service.updateCompanyInfo).toHaveBeenCalledWith(updateData);
     });
@@ -188,7 +204,7 @@ describe('SettingsController - Comprehensive', () => {
     it('should update website', async () => {
       const updateData = { website: 'https://newsite.com' };
 
-      await controller.updateCompanyInfo(updateData as any);
+      await controller.updateCompanyInfo(updateData);
 
       expect(service.updateCompanyInfo).toHaveBeenCalledWith(updateData);
     });
@@ -196,7 +212,7 @@ describe('SettingsController - Comprehensive', () => {
     it('should return updated data', async () => {
       const updateData = { name: 'Updated Company' };
 
-      const result = await controller.updateCompanyInfo(updateData as any);
+      const result = await controller.updateCompanyInfo(updateData);
 
       expect(result).toHaveProperty('data');
       expect(result.data).toHaveProperty('name');

@@ -16,7 +16,10 @@ import {
   Delete,
   Res,
 } from '@nestjs/common';
-import { FileInterceptor, FilesInterceptor, AnyFilesInterceptor } from '@nestjs/platform-express';
+import {
+  FilesInterceptor,
+  AnyFilesInterceptor,
+} from '@nestjs/platform-express';
 import {
   ApiBearerAuth,
   ApiBody,
@@ -34,13 +37,16 @@ import { Roles } from 'src/core/decorators/roles.decorator';
 import { RoutePermission } from 'src/core/decorators/route-permission.decorator';
 import { Public } from 'src/core/decorators/public.decorator';
 import { UserType, PermissionType } from 'src/core/constants/app.constants';
-import type { MulterFile } from 'src/core/cloudinary/cloudinary.service';
 import { ITokenPayload } from 'src/core/constants/interfaces/common';
 import type { Response } from 'express';
 import { Request } from 'express';
 import { GetProductDto } from './dtos/get-product.dto';
 import { UpdateProductDto } from './dtos/update-product.dto';
-import { BulkUploadService, ExcelColumn } from 'src/core/bulk-upload/bulk-upload.service';
+import { UpdateStockDto } from './dtos/update-stock.dto';
+import {
+  BulkUploadService,
+  ExcelColumn,
+} from 'src/core/bulk-upload/bulk-upload.service';
 
 @ApiTags('Products')
 @Controller('products')
@@ -48,7 +54,7 @@ export class ProductsController {
   constructor(
     private readonly productsService: ProductsService,
     private readonly bulkUploadService: BulkUploadService,
-  ) { }
+  ) {}
 
   @Post()
   @UseGuards(AuthGuard, RoleGuard)
@@ -170,7 +176,9 @@ export class ProductsController {
   @Roles(UserType.ADMIN, UserType.SUBADMIN, UserType.SUPPLIER)
   @RoutePermission(PermissionType.CREATE_PRODUCT)
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Download sample Excel file for bulk product upload' })
+  @ApiOperation({
+    summary: 'Download sample Excel file for bulk product upload',
+  })
   async downloadSample(
     @Req() req: Request & { user: ITokenPayload },
     @Res() res: Response,
@@ -185,7 +193,13 @@ export class ProductsController {
 
     // Column order: Category (1), Supplier (2 - admin only), Name, Description, Price, Images
     const columns: ExcelColumn[] = [
-      { header: 'Category*', key: 'category', width: 25, required: true, dropdown: categories },
+      {
+        header: 'Category*',
+        key: 'category',
+        width: 25,
+        required: true,
+        dropdown: categories,
+      },
     ];
 
     // Add Supplier column for ADMIN users (2nd column)
@@ -209,7 +223,9 @@ export class ProductsController {
     const sampleData = [
       {
         category: categories.length > 0 ? categories[0] : 'Electronics',
-        ...(isAdmin && { supplier: suppliers.length > 0 ? suppliers[0] : 'Supplier Name' }),
+        ...(isAdmin && {
+          supplier: suppliers.length > 0 ? suppliers[0] : 'Supplier Name',
+        }),
         name: 'Wireless Mouse',
         description: 'A high-quality wireless mouse with ergonomic design',
         price: 29.99,
@@ -217,7 +233,9 @@ export class ProductsController {
       },
       {
         category: categories.length > 0 ? categories[0] : 'Electronics',
-        ...(isAdmin && { supplier: suppliers.length > 0 ? suppliers[0] : 'Supplier Name' }),
+        ...(isAdmin && {
+          supplier: suppliers.length > 0 ? suppliers[0] : 'Supplier Name',
+        }),
         name: 'Gaming Keyboard',
         description: 'RGB mechanical gaming keyboard with blue switches',
         price: 89.99,
@@ -266,11 +284,13 @@ export class ProductsController {
     @Req() req: Request & { user: ITokenPayload },
     @UploadedFiles() files: Array<Express.Multer.File>,
   ) {
-    const excelFile = files.find((f) =>
-      f.mimetype.includes('spreadsheet') || f.originalname.endsWith('.xlsx'),
+    const excelFile = files.find(
+      (f) =>
+        f.mimetype.includes('spreadsheet') || f.originalname.endsWith('.xlsx'),
     );
-    const zipFile = files.find((f) =>
-      f.mimetype === 'application/zip' || f.originalname.endsWith('.zip'),
+    const zipFile = files.find(
+      (f) =>
+        f.mimetype === 'application/zip' || f.originalname.endsWith('.zip'),
     );
 
     if (!excelFile) {
@@ -282,5 +302,79 @@ export class ProductsController {
       excelFile.buffer,
       zipFile?.buffer,
     );
+  }
+
+  @Patch(':id/stock')
+  @UseGuards(AuthGuard, RoleGuard)
+  @Roles(UserType.SUPPLIER, UserType.ADMIN)
+  @RoutePermission(PermissionType.UPDATE_PRODUCT)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Update product stock' })
+  @ApiResponse({
+    status: 200,
+    description: 'Product stock updated successfully',
+  })
+  async updateProductStock(
+    @Param('id') id: string,
+    @Req() req: Request & { user: ITokenPayload },
+    @Body() updateStockDto: UpdateStockDto,
+  ) {
+    return this.productsService.updateProductStock(
+      id,
+      req.user,
+      updateStockDto,
+    );
+  }
+
+  @Get('stock/low')
+  @UseGuards(AuthGuard, RoleGuard)
+  @Roles(UserType.SUPPLIER, UserType.ADMIN)
+  @RoutePermission(PermissionType.CREATE_PRODUCT)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get low stock products' })
+  @ApiResponse({
+    status: 200,
+    description: 'Low stock products retrieved successfully',
+  })
+  async getLowStockProducts(@Req() req: Request & { user: ITokenPayload }) {
+    const supplierId =
+      req.user.userType === UserType.SUPPLIER ? req.user.id : undefined;
+    return this.productsService.getLowStockProducts(supplierId);
+  }
+
+  @Post(':id/stock/increase')
+  @UseGuards(AuthGuard, RoleGuard)
+  @Roles(UserType.SUPPLIER, UserType.ADMIN)
+  @RoutePermission(PermissionType.UPDATE_PRODUCT)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Increase product stock' })
+  @ApiResponse({
+    status: 200,
+    description: 'Product stock increased successfully',
+  })
+  async increaseStock(
+    @Param('id') id: string,
+    @Req() req: Request & { user: ITokenPayload },
+    @Body('quantity') quantity: number,
+  ) {
+    return this.productsService.increaseStock(id, quantity);
+  }
+
+  @Post(':id/stock/decrease')
+  @UseGuards(AuthGuard, RoleGuard)
+  @Roles(UserType.SUPPLIER, UserType.ADMIN)
+  @RoutePermission(PermissionType.UPDATE_PRODUCT)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Decrease product stock' })
+  @ApiResponse({
+    status: 200,
+    description: 'Product stock decreased successfully',
+  })
+  async decreaseStock(
+    @Param('id') id: string,
+    @Req() req: Request & { user: ITokenPayload },
+    @Body('quantity') quantity: number,
+  ) {
+    return this.productsService.decreaseStock(id, quantity);
   }
 }
